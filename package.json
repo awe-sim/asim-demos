@@ -11,7 +11,7 @@
     "preview": "vite preview",
     "test": "vitest",
     "coverage": "vitest run --coverage",
-    "deploy": "gh-pages -d dist",
+    "deploy": "tsc && vite build && gh-pages -d dist",
     "serve": "vite preview"
   },
   "dependencies": {

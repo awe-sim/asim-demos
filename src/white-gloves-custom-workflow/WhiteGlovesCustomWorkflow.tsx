@@ -289,6 +289,8 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
         snapGrid={[25 / 4, 25 / 4]}
         snapToGrid
         style={{ width: '100vw', height: '100vh' }}
+        panOnScroll
+        panOnScrollSpeed={1.5}
         zoomOnDoubleClick={false}>
         <CustomEdgeToolbarPlaceholder />
         <MiniMap></MiniMap>
