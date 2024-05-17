@@ -1,0 +1,257 @@
+$BG_CLR_GREY: #d9d9d9;
+$FG_CLR_GREY: #595959;
+
+$BG_CLR_BLUE: #ecf2f9;
+$FG_CLR_BLUE: #0080ff;
+
+$BG_CLR_ORANGE: #ece2c6;
+$FG_CLR_ORANGE: #997300;
+
+$BG_CLR_RED: #f2d9d9;
+$FG_CLR_RED: #cc3333;
+
+$BG_CLR_GREEN: #ecf9ec;
+$FG_CLR_GREEN: #009900;
+
+$BG_CLR_TEAL: #d9f2ee;
+$FG_CLR_TEAL: #2d8677;
+
+* {
+  font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+}
+
+input {
+  border: none;
+  outline: none;
+  min-width: 90px;
+  max-width: 190px;
+}
+
+.node-toolbar {
+  transition: opacity 0.15s ease-in;
+  &.selected {
+    .MuiStack-root {
+      background-color: rgb(255, 255, 255, 0.85);
+      border-radius: 4px;
+      box-shadow: 0 0 5px #c0c0c0;
+      padding: 10px;
+      .MuiButton-root {
+        border-width: 0.75px;
+        font-size: 10px;
+        height: 24px;
+        text-transform: none;
+        width: 90px;
+        &.START {
+          border-color: $FG_CLR_GREY;
+          color: $FG_CLR_GREY;
+          background-color: $BG_CLR_GREY;
+        }
+        &.NORMAL {
+          border-color: $FG_CLR_BLUE;
+          color: $FG_CLR_BLUE;
+          background-color: $BG_CLR_BLUE;
+        }
+        &.AWAITING_REPLY {
+          border-color: $FG_CLR_ORANGE;
+          color: $FG_CLR_ORANGE;
+          background-color: $BG_CLR_ORANGE;
+        }
+        &.ERROR {
+          border-color: $FG_CLR_RED;
+          color: $FG_CLR_RED;
+          background-color: $BG_CLR_RED;
+        }
+        &.DONE {
+          border-color: $FG_CLR_GREEN;
+          color: $FG_CLR_GREEN;
+          background-color: $BG_CLR_GREEN;
+        }
+        &.teal {
+          border-color: $FG_CLR_TEAL;
+          color: $FG_CLR_TEAL;
+          background-color: $BG_CLR_TEAL;
+        }
+        &.selected {
+          border-width: 1.5px;
+        }
+      }
+      .MuiCheckbox-root {
+        padding: 0;
+      }
+    }
+  }
+  &.dragging {
+    opacity: 0.5;
+  }
+}
+
+.custom-node {
+  .content {
+    border-radius: 4px;
+    display: table-cell;
+    height: 25px;
+    max-width: 200px;
+    min-width: 105px;
+    font-size: 12px;
+    outline-style: solid;
+    outline-width: 0.75px;
+    outline-color: $FG_CLR_BLUE;
+    overflow: hidden;
+    padding: 0 10px;
+    text-align: center;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    white-space: nowrap;
+    .label {
+      max-width: 180px;
+      min-width: 85px;
+    }
+  }
+
+  .handle {
+    border: none;
+    height: 3px;
+    outline-style: solid;
+    outline-width: 1px;
+    width: 3px;
+    min-width: unset;
+    min-height: unset;
+    &.react-flow__handle-top {
+      top: -2px;
+    }
+    &.react-flow__handle-bottom {
+      bottom: -2px;
+    }
+    &.react-flow__handle-left {
+      left: -2px;
+    }
+    &.react-flow__handle-right {
+      right: -2px;
+    }
+  }
+
+  &.START {
+    .content,
+    .handle {
+      background-color: $BG_CLR_GREY;
+      outline-color: $FG_CLR_GREY;
+    }
+    .handle:hover {
+      background-color: $FG_CLR_GREY;
+    }
+  }
+  &.NORMAL {
+    .content,
+    .handle {
+      background-color: $BG_CLR_BLUE;
+      outline-color: $FG_CLR_BLUE;
+    }
+    .handle:hover {
+      background-color: $FG_CLR_BLUE;
+    }
+  }
+  &.AWAITING_REPLY {
+    .content,
+    .handle {
+      background-color: $BG_CLR_ORANGE;
+      outline-color: $FG_CLR_ORANGE;
+    }
+    .handle:hover {
+      background-color: $FG_CLR_ORANGE;
+    }
+  }
+  &.ERROR {
+    .content,
+    .handle {
+      background-color: $BG_CLR_RED;
+      outline-color: $FG_CLR_RED;
+    }
+    .handle:hover {
+      background-color: $FG_CLR_RED;
+    }
+  }
+  &.DONE {
+    .content,
+    .handle {
+      background-color: $BG_CLR_GREEN;
+      outline-color: $FG_CLR_GREEN;
+    }
+    .handle:hover {
+      background-color: $FG_CLR_GREEN;
+    }
+  }
+  &.teal {
+    .content,
+    .handle {
+      background-color: $BG_CLR_TEAL;
+      outline-color: $FG_CLR_TEAL;
+    }
+    .handle:hover {
+      background-color: $FG_CLR_TEAL;
+    }
+  }
+
+  &:hover,
+  &.selected {
+    .content {
+      outline-width: 1.5px;
+    }
+    .handle {
+      outline-width: 1.5px;
+    }
+  }
+}
+
+.edge-label {
+  // background-color: rgba(255, 255, 255, 0.75);
+  font-size: 10px;
+  padding: 5px 10px;
+  pointer-events: all;
+  position: absolute;
+  .MuiListItemIcon-root {
+    min-width: unset;
+    padding-right: 5px;
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+  .MuiListItemText-root {
+    margin: 0;
+    .MuiTypography-root {
+      font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+      font-size: 12px;
+    }
+  }
+}
+
+.edge-toolbar {
+  background-color: rgb(255, 255, 255, 0.85);
+  border-radius: 4px;
+  box-shadow: 0 0 5px #c0c0c0;
+  padding: 10px;
+  font-size: 10px;
+  pointer-events: all;
+  position: absolute;
+  top: -25px;
+}
+
+.edge-toolbar-v2 {
+  width: 1000px;
+  .MuiStack-root {
+    background-color: rgb(255, 255, 255, 0.85);
+    border-radius: 4px;
+    box-shadow: 0 0 5px #c0c0c0;
+    padding: 10px;
+    .MuiButton-root {
+      border-width: 0.75px;
+      font-size: 10px;
+      height: 24px;
+      text-transform: none;
+      width: 90px;
+    }
+  }
+  position: absolute;
+  z-index: 10;
+  transform: translateX(-50%) translateY(-100%) translateY(-30px);
+}
