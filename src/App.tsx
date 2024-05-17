@@ -1,7 +1,7 @@
 import { Button, Stack, Typography } from '@mui/material';
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import { ReactFlowProvider } from 'reactflow';
-import { MigrationArtifactsStateMachine } from './migration-artifacts-state-machine/components';
+import { MigrationArtifactsStateMachine } from './migration-artifacts/components';
 import { CustomerSelection } from './security-center-customer-selection/components';
 import { FilterComponent } from './security-center-filters/filterComponents';
 import { WhiteGlovesCustomWorkflow } from './white-gloves-custom-workflow/WhiteGlovesCustomWorkflow';
