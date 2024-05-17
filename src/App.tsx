@@ -12,21 +12,21 @@ export const App: React.FC = () => {
     <Router>
       <>
         <Routes>
-          <Route path="/demo-1" element={'HELLO'} />
-          <Route path="/demo-2" element={'WORLD'} />
-          <Route path="/" Component={Directory}></Route>
-          <Route path="/white-gloves-process-flow" element={<ReleaseComponent />} />
-          <Route
-            path="/white-gloves-custom-workflow"
-            element={
-              <ReactFlowProvider>
-                <WhiteGlovesCustomWorkflow />
-              </ReactFlowProvider>
-            }
-          />
-          <Route path="/security-center-customer-selected" element={<CustomerSelection />} />
-          <Route path="/security-center-filters" element={<FilterComponent />} />
-          <Route path="/migration-artifacts-state-machine" element={<MigrationArtifactsStateMachine />} />
+          <Route path="/asim-demos">
+            <Route index element={<Directory />} />
+            <Route path="white-gloves-process-flow" element={<ReleaseComponent />} />
+            <Route
+              path="white-gloves-custom-workflow"
+              element={
+                <ReactFlowProvider>
+                  <WhiteGlovesCustomWorkflow />
+                </ReactFlowProvider>
+              }
+            />
+            <Route path="security-center-customer-selected" element={<CustomerSelection />} />
+            <Route path="security-center-filters" element={<FilterComponent />} />
+            <Route path="migration-artifacts-state-machine" element={<MigrationArtifactsStateMachine />} />
+          </Route>
         </Routes>
       </>
     </Router>
@@ -37,19 +37,19 @@ const Directory: React.FC = () => {
   return (
     <Stack direction="column" spacing={2} width={500}>
       <Typography variant="h4">Demos</Typography>
-      <Button href="/white-gloves-process-flow" variant="outlined" color="primary">
+      <Button href="/asim-demos/white-gloves-process-flow" variant="outlined" color="primary">
         White Gloves - Process Flow
       </Button>
-      <Button href="/white-gloves-custom-workflow" variant="outlined" color="primary">
+      <Button href="/asim-demos/white-gloves-custom-workflow" variant="outlined" color="primary">
         White Gloves - Custom Workflow
       </Button>
-      <Button href="/security-center-customer-selected" variant="outlined" color="primary">
+      <Button href="/asim-demos/security-center-customer-selected" variant="outlined" color="primary">
         Security Center - Customer Selection
       </Button>
-      <Button href="/security-center-filters" variant="outlined" color="primary">
+      <Button href="/asim-demos/security-center-filters" variant="outlined" color="primary">
         Security Center - Filters
       </Button>
-      <Button href="/migration-artifacts-state-machine" variant="outlined" color="primary">
+      <Button href="/asim-demos/migration-artifacts-state-machine" variant="outlined" color="primary">
         Migration Artifacts - State Machine
       </Button>
     </Stack>
