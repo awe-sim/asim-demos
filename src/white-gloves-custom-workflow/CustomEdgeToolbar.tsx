@@ -1,5 +1,5 @@
-import { Add, Clear, MailOutline, Upload } from '@mui/icons-material';
-import { IconButton, InputAdornment, Stack, TextField } from '@mui/material';
+import { Clear, ExpandLess, ExpandMore, MailOutline, Upload } from '@mui/icons-material';
+import { Button, IconButton, InputAdornment, Stack, TextField } from '@mui/material';
 import { ChangeEvent, MouseEventHandler, useCallback, useMemo, useRef, useState } from 'react';
 import { Edge, useEdges, XYPosition } from 'reactflow';
 import { useRecoilValue } from 'recoil';
@@ -169,6 +169,8 @@ const CustomEdgeToolbar: React.FC<CustomEdgeToolbarProps> = ({ edge, edgeLabelCo
     [edge.id, updateEdge],
   );
 
+  const [expanded, setExpanded] = useState<boolean>(false);
+
   return (
     <div onDoubleClick={prevent} className="edge-toolbar-v2" style={{ left: edgeLabelCoords?.x, top: edgeLabelCoords?.y }}>
       <Stack direction="column" spacing={1}>
@@ -191,11 +193,18 @@ const CustomEdgeToolbar: React.FC<CustomEdgeToolbarProps> = ({ edge, edgeLabelCo
               remove={() => removeVariant(0)}
             />
           )}
-          <IconButton size="small" onClick={addVariation}>
-            <Add />
+          {edge.data && edge.data.variants.length > 1 && <div style={{ marginTop: 'auto', marginBottom: 'auto' }}>{edge.data.variants.length} Variants</div>}
+          <div style={{ marginTop: 'auto', marginBottom: 'auto' }}>
+            <Button size="small" variant="outlined" onClick={addVariation}>
+              Add Variant
+            </Button>
+          </div>
+          <IconButton size="small" onClick={() => setExpanded(!expanded)}>
+            {expanded ? <ExpandMore /> : <ExpandLess />}
           </IconButton>
         </Stack>
-        {edge.data &&
+        {expanded &&
+          edge.data &&
           edge.data.variants.length > 1 &&
           edge.data?.variants.map((variant, index) => (
             <Stack key={index} direction="row" spacing={1}>
