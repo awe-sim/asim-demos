@@ -8,7 +8,8 @@ export enum Type {
 
 export enum ProcessConnection {
   AS2 = 'AS2',
-  SFTP = 'SFTP',
+  SFTP_INTERNAL = 'SFTP_INTERNAL',
+  SFTP_EXTERNAL = 'SFTP_EXTERNAL',
   HTTP = 'HTTP',
   VAN = 'VAN',
   WEBHOOK = 'WEBHOOK',
@@ -33,23 +34,7 @@ export type State = {
 
 export type Action = {
   isEmailAction: boolean;
-  // subActions: SubAction[];
   variants: Variant[];
-};
-
-export type SubAction = {
-  label: string;
-  emailTemplate: string;
-  hasReminder: boolean;
-  reminderEmailTemplate: string;
-  constraintsConnectionsIn: ProcessConnection[];
-  constraintsConnectionsNotIn: ProcessConnection[];
-  constraintsOriginsIn: ProcessOrigin[];
-  constraintsOriginsNotIn: ProcessOrigin[];
-  constraintsDirectionsIn: ProcessDirection[];
-  constraintsDirectionsNotIn: ProcessDirection[];
-  constraintsStatesIn: string[];
-  constraintsStatesNotIn: string[];
 };
 
 export type Variant = {
@@ -66,3 +51,5 @@ export type Variant = {
   constraintsStatesIn: string[];
   constraintsStatesNotIn: string[];
 };
+
+export type ConnectionStatus = Record<ProcessConnection, boolean>;

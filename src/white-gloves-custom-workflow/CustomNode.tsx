@@ -7,6 +7,8 @@ import { Action, State, Type } from './types';
 import { prevent } from '../common/helpers';
 import { showToast2 } from '../common/MySnackbar';
 import { AlarmOutlined } from '@mui/icons-material';
+import { anySelectedProcessConnectionState, visitedIdsState } from './states';
+import { useRecoilValue } from 'recoil';
 
 export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging, data: { label, type, isEditing } }) => {
   //
@@ -14,6 +16,10 @@ export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging,
   const edges = useEdges<Action>();
   const [newLabel, setNewLabel] = useState(label);
   const ref = useRef<HTMLInputElement>(null);
+
+  const visitedIds = useRecoilValue(visitedIdsState);
+  const anySelected = useRecoilValue(anySelectedProcessConnectionState);
+  const shouldMakeTransparent = anySelected && !visitedIds.has(id);
 
   const hasReminders = edges.some(e => e.target === id && e.data?.isEmailAction && e.data.variants.some(v => v.hasReminder));
   const reminderColor = useMemo(() => {
@@ -95,22 +101,22 @@ export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging,
     const handles = [];
     for (let i = -1; i <= 1; ++i) {
       if (type !== Type.START) {
-        handles.push(<Handle className="handle" id={`up_${i}_target`} type="target" position={Position.Top} style={{ transform: `translate(${i * 40}px, 0)` }} />);
-        handles.push(<Handle className="handle" id={`dn_${i}_target`} type="target" position={Position.Bottom} style={{ transform: `translate(${i * 40}px, 0)` }} />);
+        handles.push(<Handle className="handle" key={`up_${i}_target`} id={`up_${i}_target`} type="target" position={Position.Top} style={{ transform: `translate(${i * 40}px, 0)` }} />);
+        handles.push(<Handle className="handle" key={`dn_${i}_target`} id={`dn_${i}_target`} type="target" position={Position.Bottom} style={{ transform: `translate(${i * 40}px, 0)` }} />);
       }
       if (type !== Type.DONE) {
-        handles.push(<Handle className="handle" id={`up_${i}_source`} type="source" position={Position.Top} style={{ transform: `translate(${i * 40}px, 0)` }} />);
-        handles.push(<Handle className="handle" id={`dn_${i}_source`} type="source" position={Position.Bottom} style={{ transform: `translate(${i * 40}px, 0)` }} />);
+        handles.push(<Handle className="handle" key={`up_${i}_source`} id={`up_${i}_source`} type="source" position={Position.Top} style={{ transform: `translate(${i * 40}px, 0)` }} />);
+        handles.push(<Handle className="handle" key={`dn_${i}_source`} id={`dn_${i}_source`} type="source" position={Position.Bottom} style={{ transform: `translate(${i * 40}px, 0)` }} />);
       }
     }
     for (let i = -1; i <= 1; ++i) {
       if (type !== Type.START) {
-        handles.push(<Handle className="handle" id={`lt_${i}_target`} type="target" position={Position.Left} style={{ transform: `translate(0, ${-2 + i * 12}px)` }} />);
-        handles.push(<Handle className="handle" id={`rt_${i}_target`} type="target" position={Position.Right} style={{ transform: `translate(0, ${-2 + i * 12}px)` }} />);
+        handles.push(<Handle className="handle" key={`lt_${i}_target`} id={`lt_${i}_target`} type="target" position={Position.Left} style={{ transform: `translate(0, ${-2 + i * 12}px)` }} />);
+        handles.push(<Handle className="handle" key={`rt_${i}_target`} id={`rt_${i}_target`} type="target" position={Position.Right} style={{ transform: `translate(0, ${-2 + i * 12}px)` }} />);
       }
       if (type !== Type.DONE) {
-        handles.push(<Handle className="handle" id={`lt_${i}_source`} type="source" position={Position.Left} style={{ transform: `translate(0, ${-2 + i * 12}px)` }} />);
-        handles.push(<Handle className="handle" id={`rt_${i}_source`} type="source" position={Position.Right} style={{ transform: `translate(0, ${-2 + i * 12}px)` }} />);
+        handles.push(<Handle className="handle" key={`lt_${i}_source`} id={`lt_${i}_source`} type="source" position={Position.Left} style={{ transform: `translate(0, ${-2 + i * 12}px)` }} />);
+        handles.push(<Handle className="handle" key={`rt_${i}_source`} id={`rt_${i}_source`} type="source" position={Position.Right} style={{ transform: `translate(0, ${-2 + i * 12}px)` }} />);
       }
     }
     return handles;
@@ -118,7 +124,7 @@ export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging,
 
   return (
     <>
-      <div className={classNames('custom-node', selected && 'selected', dragging && 'dragging', type)} tabIndex={-1}>
+      <div className={classNames('custom-node', selected && 'selected', dragging && 'dragging', type)} tabIndex={-1} style={{ opacity: !shouldMakeTransparent ? 1 : 0.25 }}>
         <div onDoubleClick={onContentDoubleClick} className="content">
           <span className="label">{isEditing ? <input ref={ref} autoFocus value={newLabel} onChange={onInputChange} onKeyDown={onInputKeyDown} onBlur={onInputBlur} /> : label}</span>
           {hasReminders && (

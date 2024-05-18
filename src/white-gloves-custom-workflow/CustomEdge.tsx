@@ -3,14 +3,18 @@ import { ListItem, ListItemIcon, ListItemText } from '@mui/material';
 import classNames from 'classnames';
 import { useEffect, useMemo } from 'react';
 import { BaseEdge, EdgeLabelRenderer, EdgeProps, MarkerType, Position, getBezierPath, useReactFlow, useViewport } from 'reactflow';
-import { useSetRecoilState } from 'recoil';
-import { selectedEdgeLabelCoordsState } from './states';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
+import { anySelectedProcessConnectionState, selectedEdgeLabelCoordsState, visitedIdsState } from './states';
 import { Action, State } from './types';
 import { prevent } from '../common/helpers';
 
 export const CustomEdge: React.FC<EdgeProps<Action>> = ({ id, sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, selected, label, data, ...props }) => {
   //
   const isEmailAction = data?.isEmailAction ?? false;
+  const visitedIds = useRecoilValue(visitedIdsState);
+  const anySelected = useRecoilValue(anySelectedProcessConnectionState);
+  const shouldMakeTransparent = anySelected && !visitedIds.has(id);
+  const shouldEnhance = anySelected && visitedIds.has(id);
 
   const { flowToScreenPosition } = useReactFlow<State, Action>();
   const viewport = useViewport();
@@ -49,11 +53,12 @@ export const CustomEdge: React.FC<EdgeProps<Action>> = ({ id, sourceX, sourceY, 
     () => ({
       animation: 'dashdraw 0.5s linear infinite',
       markerEnd,
-      stroke: selected ? '#404040' : '#808080',
+      stroke: selected || shouldEnhance ? '#404040' : '#808080',
       strokeDasharray: '5',
-      strokeWidth: selected ? '3px' : '2px',
+      strokeWidth: selected || shouldEnhance ? 3 : 2,
+      opacity: !shouldMakeTransparent ? 1 : 0.25,
     }),
-    [markerEnd, selected],
+    [markerEnd, selected, shouldEnhance, shouldMakeTransparent],
   );
 
   useEffect(() => {
@@ -82,7 +87,7 @@ export const CustomEdge: React.FC<EdgeProps<Action>> = ({ id, sourceX, sourceY, 
       <BaseEdge {...props} id={id} path={path} markerEnd={MarkerType.Arrow} style={edgeCss} />
       <EdgeLabelRenderer>
         <div onDoubleClick={prevent} className={classNames('edge-label', selected && 'selected')} style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` }}>
-          <ListItem dense disablePadding>
+          <ListItem dense disablePadding style={{ opacity: !shouldMakeTransparent ? 1 : 0.25 }}>
             {isEmailAction && (
               <ListItemIcon>
                 <MailOutline color="error" />
