@@ -61,25 +61,7 @@ const WORKFLOW_JSON = {
       selected: false,
       id: '5b690d17-8e69-48b8-bed2-ec3fb3a26f2f',
     },
-    {
-      type: 'CustomEdge',
-      source: '19a047d6-e432-41e6-bb5c-d4f9a480360f',
-      target: 'dd6b58f1-77cc-4a43-8b8a-31a778da785f',
-      sourceHandle: 'dn_0_source',
-      targetHandle: 'up_0_target',
-      label: 'Receive connection info',
-      data: {
-        isEmailAction: false,
-        variants: [
-          { label: 'AS2', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: ['AS2'], constraintsConnectionsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
-          { label: 'SFTP External', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: ['SFTP_EXTERNAL'], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
-          { label: 'HTTP', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: ['HTTP'], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
-        ],
-        isToolbarShowing: false,
-      },
-      selected: false,
-      id: '8b27c3e2-87f6-4967-9cb1-4b178ed98808',
-    },
+    { type: 'CustomEdge', source: '19a047d6-e432-41e6-bb5c-d4f9a480360f', target: 'dd6b58f1-77cc-4a43-8b8a-31a778da785f', sourceHandle: 'dn_0_source', targetHandle: 'up_0_target', label: 'Receive connection info', data: { isEmailAction: false, variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: ['AS2', 'SFTP_EXTERNAL', 'HTTP'], constraintsConnectionsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }], isToolbarShowing: false }, selected: false, id: '8b27c3e2-87f6-4967-9cb1-4b178ed98808' },
     { type: 'CustomEdge', source: 'dd6b58f1-77cc-4a43-8b8a-31a778da785f', target: '3ec92d51-fda1-44e9-8cee-b95b4f02106a', sourceHandle: 'dn_0_source', targetHandle: 'up_0_target', label: 'Mark connection OK', data: { isEmailAction: false, variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }], isToolbarShowing: false }, selected: false, id: '034da15f-e6ef-48be-88d8-c33b52bff347' },
     { type: 'CustomEdge', source: '31a5eb64-654b-4566-a2b0-39fa04da57be', target: 'dd6b58f1-77cc-4a43-8b8a-31a778da785f', sourceHandle: 'rt_-1_source', targetHandle: 'lt_0_target', label: 'Receive connection info', data: { isEmailAction: false, variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }], isToolbarShowing: false }, selected: false, id: 'dcbe518d-4eee-4f0e-8b0a-287d9cb37f69' },
     {
@@ -117,30 +99,12 @@ const WORKFLOW_JSON = {
     { type: 'CustomEdge', source: '3ec92d51-fda1-44e9-8cee-b95b4f02106a', target: '12fabbec-8c88-41c6-b8b9-2166b1332eae', sourceHandle: 'rt_-1_source', targetHandle: 'lt_-1_target', label: 'Mark connection failed', data: { isEmailAction: false, variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }], isToolbarShowing: false }, selected: false, id: '8064155f-b959-472a-8352-f48b0bd5526f' },
     { type: 'CustomEdge', source: '12fabbec-8c88-41c6-b8b9-2166b1332eae', target: '3ec92d51-fda1-44e9-8cee-b95b4f02106a', sourceHandle: 'lt_1_source', targetHandle: 'rt_1_target', label: 'Mark connection OK', data: { isEmailAction: false, variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }], isToolbarShowing: false }, selected: false, id: '60a6563b-7ede-431d-a4ed-4a3cfaaef68b' },
     { type: 'CustomEdge', source: '5beb9d9d-815b-433f-834a-a21f5dd88a03', target: '3ec92d51-fda1-44e9-8cee-b95b4f02106a', sourceHandle: 'lt_1_source', targetHandle: 'up_1_target', label: 'Mark connection OK', data: { isEmailAction: false, variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }], isToolbarShowing: false }, selected: false, id: '494a0dc6-f3b7-45e9-99f5-3693ea3e96a0' },
-    {
-      type: 'CustomEdge',
-      source: '19a047d6-e432-41e6-bb5c-d4f9a480360f',
-      target: '5beb9d9d-815b-433f-834a-a21f5dd88a03',
-      sourceHandle: 'rt_0_source',
-      targetHandle: 'lt_-1_target',
-      label: 'Acknowledge',
-      data: {
-        isEmailAction: false,
-        variants: [
-          { label: 'SFTP Internal', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: ['SFTP_INTERNAL'], constraintsConnectionsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
-          { label: 'VAN', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: ['VAN'], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
-          { label: 'Web hook', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: ['WEBHOOK'], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
-        ],
-        isToolbarShowing: false,
-      },
-      selected: false,
-      id: '7fce1dc6-a02b-49db-aa2f-ad810ceef97b',
-    },
+    { type: 'CustomEdge', source: '19a047d6-e432-41e6-bb5c-d4f9a480360f', target: '5beb9d9d-815b-433f-834a-a21f5dd88a03', sourceHandle: 'rt_0_source', targetHandle: 'lt_-1_target', label: 'Acknowledge', data: { isEmailAction: false, variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: ['SFTP_INTERNAL', 'VAN', 'WEBHOOK'], constraintsConnectionsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }], isToolbarShowing: false }, selected: false, id: '7fce1dc6-a02b-49db-aa2f-ad810ceef97b' },
     { type: 'CustomEdge', id: '396720be-5665-4bee-baa7-232c71036274', source: '5beb9d9d-815b-433f-834a-a21f5dd88a03', target: '12fabbec-8c88-41c6-b8b9-2166b1332eae', sourceHandle: 'dn_0_source', targetHandle: 'up_0_target', label: 'Mark connection failed', data: { isEmailAction: false, variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }], isToolbarShowing: false }, selected: false },
     { type: 'CustomEdge', source: '09dbcd98-8e14-421f-b5bb-06ceb5671e5d', target: '3ec92d51-fda1-44e9-8cee-b95b4f02106a', sourceHandle: 'lt_0_source', targetHandle: 'dn_1_target', label: 'Mark connection OK', data: { isEmailAction: false, variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }], isToolbarShowing: false }, selected: false, id: 'ae3c4457-2426-4d78-bc5f-c5fdd4d76a39' },
     { type: 'CustomEdge', source: 'dd6b58f1-77cc-4a43-8b8a-31a778da785f', target: '12fabbec-8c88-41c6-b8b9-2166b1332eae', sourceHandle: 'dn_1_source', targetHandle: 'up_-1_target', label: 'Mark connection failed', data: { isEmailAction: false, variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }], isToolbarShowing: false }, selected: false, id: 'e0db3803-0bef-4774-8aa4-b4df39ae9b93' },
   ],
-  viewport: { x: 779.3093204492122, y: -16.33333672284425, zoom: 0.5803093065795338 },
+  viewport: { x: 773.7211143695015, y: -5.7360703812315705, zoom: 0.573607038123167 },
 };
 
 const START_NODE: Node<State> = { id: v4(), data: { label: 'Start', type: Type.START, isEditing: false, isToolbarShowing: false }, position: { x: 100, y: 100 }, type: 'CustomNode' };
