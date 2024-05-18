@@ -399,10 +399,32 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
 
   const toggleSelectedProcessConnection = useCallback(
     (connection: ProcessConnection) => {
-      setSelectedProcessConnections(selectedProcessConnections => ({
-        ...selectedProcessConnections,
-        [connection]: !selectedProcessConnections[connection],
-      }));
+      setSelectedProcessConnections(values => {
+        if (!values[connection]) {
+          return {
+            [ProcessConnection.AS2]: false,
+            [ProcessConnection.SFTP_INTERNAL]: false,
+            [ProcessConnection.SFTP_EXTERNAL]: false,
+            [ProcessConnection.HTTP]: false,
+            [ProcessConnection.VAN]: false,
+            [ProcessConnection.WEBHOOK]: false,
+            [connection]: true,
+          };
+        } else {
+          return {
+            [ProcessConnection.AS2]: false,
+            [ProcessConnection.SFTP_INTERNAL]: false,
+            [ProcessConnection.SFTP_EXTERNAL]: false,
+            [ProcessConnection.HTTP]: false,
+            [ProcessConnection.VAN]: false,
+            [ProcessConnection.WEBHOOK]: false,
+          };
+        }
+      });
+      // setSelectedProcessConnections(selectedProcessConnections => ({
+      //   ...selectedProcessConnections,
+      //   [connection]: !selectedProcessConnections[connection],
+      // }));
     },
     [setSelectedProcessConnections],
   );
