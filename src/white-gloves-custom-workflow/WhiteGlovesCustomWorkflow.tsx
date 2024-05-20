@@ -238,7 +238,7 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
           edges,
         ),
       );
-      setFlag(Flag.ACTION_CREATED);
+      setFlag(flag => flag === Flag.STATE_CONFIGURED ? Flag.ACTION_CREATED : flag);
     },
     [edges, nodes, setEdges, setFlag],
   );
@@ -504,17 +504,27 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
             <>
               <p>Awesome! Now that you have created a new communication stage, you can rename according to your migration journey. Communication stages can be one of several types:</p>
               <ul>
-                <li>Start: This is the first communication stage in any workflow. All processes in a release begin at this stage.</li>
-                <li>Normal: This is a regular communication stage, and indicates that migration for a partner or process is progressing as expected.</li>
-                <li>Awaiting Reply: This stage indicates that the WG team is waiting for a response from the partner before proceeding.</li>
-                <li>Error: This stage indicates that urgent intervention is required by the WG team to bring the migration journey of a partner or process back on track.</li>
-                <li>Done: This is the last and mandatory communication stage in any workflow. All processes in a release end at this stage.</li>
+                <li>
+                  <b>Start</b>: This is the first communication stage in any workflow. All processes in a release begin at this stage.
+                </li>
+                <li>
+                  <b>Normal</b>: This is a regular communication stage, and indicates that migration for a partner or process is progressing as expected.
+                </li>
+                <li>
+                  <b>Awaiting Reply</b>: This stage indicates that the WG team is waiting for a response from the partner before proceeding.
+                </li>
+                <li>
+                  <b>Error</b>: This stage indicates that urgent intervention is required by the WG team to bring the migration journey of a partner or process back on track.
+                </li>
+                <li>
+                  <b>Done</b>: This is the last and mandatory communication stage in any workflow. All processes in a release end at this stage.
+                </li>
               </ul>
             </>
           )}
           {flag === Flag.STATE_CONFIGURED && (
             <>
-              <p>Actions are the steps that the WG team can take to move the migration journey of a partner or process forward. Outgoing actions from a stage are available for execution by the WG team for a partner or process at that stage.</p>
+              <p>Actions are the steps that the WG team can take to move a partner or process forward along the migration journey. Outgoing actions from a stage are available for execution by the WG team for a partner or process at that stage.</p>
               <p>Now that we have a couple of communication stages defined, we can connect them using actions. To do this, click on the action handle of a communication stage and drag it to the action handle of another communication stage.</p>
             </>
           )}
@@ -540,6 +550,7 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
                 <li>VAN: Action is available only for partners or processes with a VAN connection.</li>
                 <li>Webhook: Action is available only for partners or processes with a Webhook connection.</li>
               </ul>
+              <p>Click an action to view all these options.</p>
             </>
           )}
           {flag === Flag.ACTION_CONFIGURED && (
