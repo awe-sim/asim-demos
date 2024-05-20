@@ -491,7 +491,7 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
             </Stack>
           </Stack>
         </div>
-        <div style={{ position: 'absolute', pointerEvents: 'none', width: 1250, zIndex: 100, backgroundColor: '#ffffff40' }}>
+        <div style={{ position: 'absolute', pointerEvents: 'none', width: 1250, zIndex: 100, backgroundColor: '#ffffff40', color: '#00000080' }}>
           {flag === Flag.FIRST_TIME && (
             <>
               <p>
