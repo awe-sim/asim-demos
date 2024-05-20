@@ -1,6 +1,6 @@
 import { Autocomplete, AutocompleteValue, Button, IconButton, ListItem, Stack, TextField, Tooltip } from '@mui/material';
 import classNames from 'classnames';
-import { SyntheticEvent, useCallback, useEffect, useMemo, useRef } from 'react';
+import { SyntheticEvent, useCallback, useEffect, useMemo } from 'react';
 import { Handle, NodeProps, NodeToolbar, Position, useEdges } from 'reactflow';
 import { useReactFlowHooks } from './hooks';
 import { Action, State, Type } from './types';
@@ -46,7 +46,7 @@ const TYPE_MAP: Record<AutoCompleteOptions, Type> = {
   [AutoCompleteOptions.GOLIVE]: Type.NORMAL,
   [AutoCompleteOptions.LIVE_LOAD_REQUESTED]: Type.AWAITING_REPLY,
   [AutoCompleteOptions.MIGRATION_COMPLETE]: Type.DONE,
-}
+};
 
 const AUTOCOMPLETE_OPTIONS = [
   //
@@ -72,7 +72,6 @@ export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging,
   //
   const { updateNode } = useReactFlowHooks();
   const edges = useEdges<Action>();
-  const ref = useRef<HTMLInputElement>(null);
 
   const visitedIds = useRecoilValue(visitedIdsState);
   const deadEndNodeIds = useRecoilValue(deadEndNodeIdsState);
@@ -142,13 +141,12 @@ export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging,
   );
 
   useEffect(() => {
-    if (selected && !dragging && isEditing) {
-      setTimeout(() => {
-        ref.current?.focus();
-        ref.current?.select();
-      }, 0);
+    if (!selected) {
+      updateNode(id, draft => {
+        draft.data.isEditing = false;
+      });
     }
-  }, [dragging, isEditing, selected]);
+  }, [dragging, id, isEditing, selected, updateNode]);
 
   const handles = useMemo(() => {
     const handles = [];
@@ -201,6 +199,7 @@ export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging,
                   freeSolo
                   disableClearable
                   autoFocus
+                  autoSelect
                   value={label}
                   options={AUTOCOMPLETE_OPTIONS}
                   onChange={onAutoCompleteChange}
@@ -213,10 +212,9 @@ export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging,
                   renderInput={params => (
                     <TextField //
                       {...params}
-                      ref={ref}
                       autoFocus
                       variant="standard"
-                      placeholder="Favorites"
+                      placeholder="Name"
                       onBlur={onInputBlur}
                     />
                   )}
