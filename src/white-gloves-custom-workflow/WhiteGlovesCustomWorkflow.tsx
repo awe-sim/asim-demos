@@ -1,16 +1,16 @@
-import { Button, Stack } from '@mui/material';
+import { Button, Stack, Tooltip } from '@mui/material';
 import { uniqueId } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactFlow, { Background, BackgroundVariant, Controls, Edge, MiniMap, Node, OnConnect, OnEdgeUpdateFunc, OnNodesDelete, OnSelectionChangeFunc, ReactFlowInstance, addEdge, getConnectedEdges, getIncomers, getOutgoers, updateEdge, useEdgesState, useNodesState, useReactFlow } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { v4 } from 'uuid';
-import { prevent } from '../common/helpers';
+import { prevent, usePrevious } from '../common/helpers';
 import { showToast2 } from '../common/MySnackbar';
 import { CustomEdge } from './CustomEdge';
 import { CustomEdgeToolbarPlaceholderComponent } from './CustomEdgeToolbar';
 import { CustomNode } from './CustomNode';
-import { noneSelectedProcessConnectionsState, selectedEdgeIdsState, selectedNodeIdsState, selectedProcessConnectionsState, visitedIdsState } from './states';
+import { Flag, flagState, noneSelectedProcessConnectionsState, selectedEdgeIdsState, selectedNodeIdsState, selectedProcessConnectionsState, visitedIdsState } from './states';
 import { Action, ProcessConnection, State, Type } from './types';
 import './WhiteGlovesCustomWorkflow.scss';
 import { CheckCircle, Warning } from '@mui/icons-material';
@@ -107,7 +107,7 @@ const WORKFLOW_JSON = {
   viewport: { x: 773.7211143695015, y: -5.7360703812315705, zoom: 0.573607038123167 },
 };
 
-const START_NODE: Node<State> = { id: v4(), data: { label: 'Start', type: Type.START, isEditing: false, isToolbarShowing: false }, position: { x: 100, y: 100 }, type: 'CustomNode' };
+const START_NODE: Node<State> = { id: v4(), data: { label: 'Start', type: Type.START, isEditing: false, isToolbarShowing: false }, position: { x: 200, y: 200 }, type: 'CustomNode' };
 
 export const WhiteGlovesCustomWorkflow: React.FC = () => {
   //
@@ -118,8 +118,10 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
   const nodeTypes = useMemo(() => ({ CustomNode }), []);
   const edgeTypes = useMemo(() => ({ CustomEdge }), []);
 
-  const setSelectedNodeIds = useSetRecoilState(selectedNodeIdsState);
-  const setSelectedEdgeIds = useSetRecoilState(selectedEdgeIdsState);
+  const [selectedNodeIds, setSelectedNodeIds] = useRecoilState(selectedNodeIdsState);
+  const [selectedEdgeIds, setSelectedEdgeIds] = useRecoilState(selectedEdgeIdsState);
+
+  const [flag, setFlag] = useRecoilState(flagState);
 
   // const defaultEdgeOptions = useMemo(
   //   () =>
@@ -157,16 +159,36 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
         type: 'CustomNode',
         selected: true,
       });
+      setFlag(Flag.STATE_CREATED);
     },
-    [addNodes, screenToFlowPosition],
+    [addNodes, screenToFlowPosition, setFlag],
   );
+
+  const prevSelectedNodesCount = usePrevious(selectedNodeIds.length);
+  const prevSelectedEdgesCount = usePrevious(selectedEdgeIds.length);
 
   const onSelectionChanged = useCallback<OnSelectionChangeFunc>(
     ({ nodes, edges }: { nodes: Node<State>[]; edges: Edge<Action>[] }) => {
       setSelectedNodeIds(nodes.map(it => it.id));
       setSelectedEdgeIds(edges.map(it => it.id));
+      console.log(flag, nodes.length, prevSelectedNodesCount);
+
+      if (flag === Flag.STATE_CREATED) {
+        if (nodes.length === 0 && edges.length === 0) {
+          if (prevSelectedNodesCount !== 0 || prevSelectedEdgesCount !== 0) {
+            setFlag(Flag.STATE_CONFIGURED);
+          }
+        }
+      }
+      if (flag === Flag.ACTION_CREATED) {
+        if (nodes.length === 0 && edges.length === 0) {
+          if (prevSelectedNodesCount !== 0 || prevSelectedEdgesCount !== 0) {
+            setFlag(Flag.ACTION_CONFIGURED);
+          }
+        }
+      }
     },
-    [setSelectedEdgeIds, setSelectedNodeIds],
+    [flag, prevSelectedEdgesCount, prevSelectedNodesCount, setFlag, setSelectedEdgeIds, setSelectedNodeIds],
   );
 
   const onConnect = useCallback<OnConnect>(
@@ -216,8 +238,9 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
           edges,
         ),
       );
+      setFlag(Flag.ACTION_CREATED);
     },
-    [edges, nodes, setEdges],
+    [edges, nodes, setEdges, setFlag],
   );
 
   const onEdgeUpdate = useCallback<OnEdgeUpdateFunc<Action>>(
@@ -335,19 +358,22 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
         setNodes(flow.nodes || []);
         setEdges(flow.edges || []);
         setViewport({ x, y, zoom });
+        setFlag(flow.nodes.length || flow.edges.length ? Flag.ACTION_CONFIGURED : Flag.FIRST_TIME);
       }
     };
     restoreFlow();
-  }, [setEdges, setNodes, setViewport]);
+  }, [setEdges, setFlag, setNodes, setViewport]);
 
   const clear = useCallback(() => {
     setNodes([START_NODE]);
     setEdges([]);
-  }, [setEdges, setNodes]);
+    setFlag(Flag.FIRST_TIME);
+  }, [setEdges, setFlag, setNodes]);
 
   const initialize = useCallback(() => {
     localStorage.setItem(flowKey, JSON.stringify(WORKFLOW_JSON));
-  }, []);
+    load();
+  }, [load]);
 
   const [selectedProcessConnections, setSelectedProcessConnections] = useRecoilState(selectedProcessConnectionsState);
   const noneSelectedProcessConnections = useRecoilValue(noneSelectedProcessConnectionsState);
@@ -443,6 +469,36 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
     process();
   }, [process]);
 
+  function getConnectionLabel(connection: ProcessConnection): string {
+    switch (connection) {
+      case ProcessConnection.AS2:
+        return 'AS2';
+      case ProcessConnection.SFTP_INTERNAL:
+        return 'SFTP Internal';
+      case ProcessConnection.SFTP_EXTERNAL:
+        return 'SFTP External';
+      case ProcessConnection.HTTP:
+        return 'HTTP';
+      case ProcessConnection.VAN:
+        return 'VAN';
+      case ProcessConnection.WEBHOOK:
+        return 'Webhook';
+    }
+  }
+
+  function getConnectionTooltip(connection: ProcessConnection, status: boolean, selected: boolean): string {
+    const label = getConnectionLabel(connection);
+    const tip1 = status ? `${label} workflow has been configured properly.` : `${label} workflow has NOT been configured properly.`;
+    const tip2 = (() => {
+      if (status) {
+        return selected ? `Click to show the complete workflow.` : `Click to show ${label} portion of the workflow.`;
+      } else {
+        return selected ? `Click to show complete workflow.` : `Click to show ${label} portion of the workflow for troubleshooting.`;
+      }
+    })();
+    return `${tip1} ${tip2}`;
+  }
+
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
       <svg style={{ position: 'absolute', top: 0, left: 0 }}>
@@ -482,80 +538,98 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
         zoomOnDoubleClick={false}>
         <CustomEdgeToolbarPlaceholderComponent />
         <MiniMap></MiniMap>
-        <Controls onDoubleClick={prevent}>
+        <Controls onDoubleClick={prevent} />
+        <div style={{ position: 'absolute', bottom: 8, left: 40, padding: 8, zIndex: 100, backgroundColor: '#ffffffc0' }} onDoubleClick={prevent}>
           <Stack direction="column" spacing={1} style={{ marginTop: 8 }}>
             <Stack direction="row" spacing={1}>
-              <Button variant="outlined" size="small" onClick={save} onDoubleClick={prevent}>
-                Save
-              </Button>
-              <Button variant="outlined" size="small" onClick={load} onDoubleClick={prevent}>
-                Reload
-              </Button>
-              <Button variant="outlined" size="small" onClick={clear} onDoubleClick={prevent}>
-                Reset
-              </Button>
-              <Button variant="outlined" size="small" onClick={initialize} onDoubleClick={prevent}>
-                Initialize
-              </Button>
+              <Tooltip placement="top" arrow disableInteractive title="Save the current workflow so that it loads automatically on page refresh">
+                <Button variant="outlined" size="small" onClick={save} onDoubleClick={prevent}>
+                  Save
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" arrow disableInteractive title="Load the last saved workflow">
+                <Button variant="outlined" size="small" onClick={load} onDoubleClick={prevent}>
+                  Reload
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" arrow disableInteractive title="Clear the current workflow">
+                <Button variant="outlined" size="small" onClick={clear} onDoubleClick={prevent}>
+                  Clear
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" arrow disableInteractive title="Initialize the workflow with a predefined JSON">
+                <Button variant="outlined" size="small" onClick={initialize} onDoubleClick={prevent}>
+                  Initialize WG Workflow
+                </Button>
+              </Tooltip>
+              <Tooltip placement="top" arrow disableInteractive title="Initialize the workflow with a predefined JSON">
+                <Button variant="outlined" size="small" onClick={initialize} onDoubleClick={prevent}>
+                  Initialize Sample Workflow
+                </Button>
+              </Tooltip>
             </Stack>
             <Stack direction="row" spacing={1}>
-              <Button //
-                color={connectionStatus[ProcessConnection.AS2] ? 'success' : 'warning'}
-                endIcon={connectionStatus[ProcessConnection.AS2] ? <CheckCircle /> : <Warning />}
-                variant={selectedProcessConnections[ProcessConnection.AS2] ? 'contained' : 'outlined'}
-                size="small"
-                onClick={() => toggleSelectedProcessConnection(ProcessConnection.AS2)}
-                onDoubleClick={prevent}>
-                AS2
-              </Button>
-              <Button //
-                color={connectionStatus[ProcessConnection.SFTP_INTERNAL] ? 'success' : 'warning'}
-                endIcon={connectionStatus[ProcessConnection.SFTP_INTERNAL] ? <CheckCircle /> : <Warning />}
-                variant={selectedProcessConnections[ProcessConnection.SFTP_INTERNAL] ? 'contained' : 'outlined'}
-                size="small"
-                onClick={() => toggleSelectedProcessConnection(ProcessConnection.SFTP_INTERNAL)}
-                onDoubleClick={prevent}>
-                SFTP Internal
-              </Button>
-              <Button //
-                color={connectionStatus[ProcessConnection.SFTP_EXTERNAL] ? 'success' : 'warning'}
-                endIcon={connectionStatus[ProcessConnection.SFTP_EXTERNAL] ? <CheckCircle /> : <Warning />}
-                variant={selectedProcessConnections[ProcessConnection.SFTP_EXTERNAL] ? 'contained' : 'outlined'}
-                size="small"
-                onClick={() => toggleSelectedProcessConnection(ProcessConnection.SFTP_EXTERNAL)}
-                onDoubleClick={prevent}>
-                SFTP External
-              </Button>
-              <Button //
-                color={connectionStatus[ProcessConnection.HTTP] ? 'success' : 'warning'}
-                endIcon={connectionStatus[ProcessConnection.HTTP] ? <CheckCircle /> : <Warning />}
-                variant={selectedProcessConnections[ProcessConnection.HTTP] ? 'contained' : 'outlined'}
-                size="small"
-                onClick={() => toggleSelectedProcessConnection(ProcessConnection.HTTP)}
-                onDoubleClick={prevent}>
-                HTTP
-              </Button>
-              <Button //
-                color={connectionStatus[ProcessConnection.VAN] ? 'success' : 'warning'}
-                endIcon={connectionStatus[ProcessConnection.VAN] ? <CheckCircle /> : <Warning />}
-                variant={selectedProcessConnections[ProcessConnection.VAN] ? 'contained' : 'outlined'}
-                size="small"
-                onClick={() => toggleSelectedProcessConnection(ProcessConnection.VAN)}
-                onDoubleClick={prevent}>
-                VAN
-              </Button>
-              <Button //
-                color={connectionStatus[ProcessConnection.WEBHOOK] ? 'success' : 'warning'}
-                endIcon={connectionStatus[ProcessConnection.WEBHOOK] ? <CheckCircle /> : <Warning />}
-                variant={selectedProcessConnections[ProcessConnection.WEBHOOK] ? 'contained' : 'outlined'}
-                size="small"
-                onClick={() => toggleSelectedProcessConnection(ProcessConnection.WEBHOOK)}
-                onDoubleClick={prevent}>
-                Web hook
-              </Button>
+              {[ProcessConnection.AS2, ProcessConnection.SFTP_INTERNAL, ProcessConnection.SFTP_EXTERNAL, ProcessConnection.HTTP, ProcessConnection.VAN, ProcessConnection.WEBHOOK].map(connection => (
+                <Tooltip key={connection} placement="top" arrow disableInteractive title={getConnectionTooltip(connection, connectionStatus[connection], selectedProcessConnections[connection])}>
+                  <Button //
+                    color={connectionStatus[connection] ? 'success' : 'warning'}
+                    endIcon={connectionStatus[connection] ? <CheckCircle /> : <Warning />}
+                    variant={selectedProcessConnections[connection] ? 'contained' : 'outlined'}
+                    size="small"
+                    onClick={() => toggleSelectedProcessConnection(connection)}
+                    onDoubleClick={prevent}>
+                    {getConnectionLabel(connection)}
+                  </Button>
+                </Tooltip>
+              ))}
             </Stack>
           </Stack>
-        </Controls>
+        </div>
+        <div style={{ position: 'absolute', pointerEvents: 'none', width: 1250, zIndex: 100, backgroundColor: '#ffffff40' }}>
+          {flag === Flag.FIRST_TIME && (
+            <>
+              <p>
+                Welcome to the <b>White Gloves Workflow Editor</b>. Here you can create and configure workflows for White Gloves migration journey. A workflow consists of a collection of communication stages, connected by actions. The WG team can execute any of the outgoing actions from a stage.
+              </p>
+              <p>To get started, double-click on the canvas to create a new communication stage.</p>
+            </>
+          )}
+          {flag === Flag.STATE_CREATED && (
+            <>
+              <p>Awesome! Now that you have created a new communication stage, you can rename according to your migration journey. Communication stages can be one of several types:</p>
+              <ul>
+                <li>Start: This is the first communication stage in any workflow. All processes in a release begin at this stage.</li>
+                <li>Normal: This is a regular communication stage, and indicates that migration for a partner or process is progressing as expected.</li>
+                <li>Awaiting Reply: This stage indicates that the WG team is waiting for a response from the partner before proceeding.</li>
+                <li>Error: This stage indicates that urgent intervention is required by the WG team to bring the migration journey of a partner or process back on track.</li>
+                <li>Done: This is the last and mandatory communication stage in any workflow. All processes in a release end at this stage.</li>
+              </ul>
+            </>
+          )}
+          {flag === Flag.STATE_CONFIGURED && <>
+            <p>Actions are the steps that the WG team can take to move the migration journey of a partner or process forward. Outgoing actions from a stage are available for execution by the WG team for a partner or process at that stage.</p>
+            <p>Now that we have a couple of communication stages defined, we can connect them using actions. To do this, click on the action handle of a communication stage and drag it to the action handle of another communication stage.</p>
+          </>}
+          {flag === Flag.ACTION_CREATED && <>
+            <p>Great! We now have an action connecting two communication stages. Actions can be of several types:</p>
+            <ul>
+              <li>Simple action: This is a regular action that the WG team can execute to move the migration journey of a partner or process forward.</li>
+              <li>Email action: This is an action that sends an email to the partner or process. You can configure email template and reminder details for this action.</li>
+            </ul>
+            <p>Actions can also be configured to be available only only for certain connection types. These are called <b>Action Constraints</b>. Constraints can be configured for:</p>
+            <ul>
+              <li>AS2: Action is available only for partners or processes with an AS2 connection.</li>
+              <li>SFTP Internal: Action is available only for partners or processes with <b>PartnerLinQ</b>'s SFTP connection.</li>
+              <li>SFTP External: Action is available only for partners or processes with <b>partner</b>'s SFTP connection.</li>
+              <li>HTTP: Action is available only for partners or processes with an HTTP connection.</li>
+              <li>VAN: Action is available only for partners or processes with a VAN connection.</li>
+              <li>Webhook: Action is available only for partners or processes with a Webhook connection.</li>
+            </ul>
+          </>}
+          {flag === Flag.ACTION_CONFIGURED && <>
+            <p>Keep an eye out at the status buttons at the bottom of the screen. They will indicate whether the workflow has been configured properly for each connection type.</p>
+          </>}
+        </div>
         <Background color="#f4f4f4" gap={25} variant={BackgroundVariant.Lines}></Background>
       </ReactFlow>
     </div>

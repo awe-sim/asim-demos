@@ -54,3 +54,16 @@ export const visitedIdsState = atom<Set<string>>({
   key: 'visitedIds',
   default: new Set(),
 });
+
+export enum Flag {
+  FIRST_TIME = 'firstTime',
+  STATE_CREATED = 'stateCreated',
+  STATE_CONFIGURED = 'stateConfigured',
+  ACTION_CREATED = 'actionCreated',
+  ACTION_CONFIGURED = 'actionConfigured',
+}
+
+export const flagState = atom<Flag>({
+  key: 'flag',
+  default: Flag.FIRST_TIME,
+});

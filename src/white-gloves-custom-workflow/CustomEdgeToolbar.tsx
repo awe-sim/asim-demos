@@ -1,11 +1,11 @@
 import { Edge, useEdges, XYPosition } from 'reactflow';
-import { Action, ProcessConnection, ProcessDirection, ProcessOrigin, Variant } from './types';
+import { Action, ProcessConnection, Variant } from './types';
 import { useRecoilValue } from 'recoil';
 import { selectedEdgeIdsState, selectedEdgeLabelCoordsState } from './states';
 import { ChangeEvent, useCallback, useMemo, useRef, useState } from 'react';
 import { useReactFlowHooks } from './hooks';
 import { MailOutline, ExpandMore, ExpandLess, Clear, Mail, Upload, Lock, LockOpen, AlarmOnOutlined, AlarmOutlined } from '@mui/icons-material';
-import { Stack, TextField, Button, IconButton, InputAdornment, Chip, List, Popover, ListItemButton } from '@mui/material';
+import { Stack, TextField, Button, IconButton, InputAdornment, Chip, List, Popover, ListItemButton, Tooltip } from '@mui/material';
 import { prevent } from '../common/helpers';
 
 export const CustomEdgeToolbarPlaceholderComponent: React.FC = () => {
@@ -93,7 +93,7 @@ const CustomEdgeToolbarComponent: React.FC<CustomEdgeToolbarProps> = ({ edge, ed
     <div onDoubleClick={prevent} className="edge-toolbar-v2" style={{ left: edgeLabelCoords?.x, top: edgeLabelCoords?.y }}>
       <Stack direction="column" spacing={1}>
         <Stack direction="row" spacing={1}>
-          <ToggleButtonComponent iconOn={<MailOutline color="error" />} iconOff={<MailOutline />} value={edge.data?.isEmailAction ?? false} onToggle={toggleEmailAction} />
+          <ToggleButtonComponent iconOn={<MailOutline color="error" />} iconOff={<MailOutline />} value={edge.data?.isEmailAction ?? false} onToggle={toggleEmailAction} tooltip={edge.data?.isEmailAction ?? false ? 'Click to revert to a simple action' : 'Click to convert to an email action'} />
           <TextField label="Action Name" size="small" variant="standard" value={edge.label} onChange={setName} style={{ width: '200px' }} inputProps={{ style: { height: '26px' } }} />
           {edge.data && edge.data.variants.length === 1 && (
             <VariantComponent //
@@ -108,13 +108,25 @@ const CustomEdgeToolbarComponent: React.FC<CustomEdgeToolbarProps> = ({ edge, ed
           )}
           {edge.data && edge.data.variants.length > 1 && <div style={{ marginTop: 'auto', marginBottom: 'auto' }}>{edge.data.variants.length} Variants</div>}
           <div style={{ marginTop: 'auto', marginBottom: 'auto' }}>
-            <Button size="small" variant="outlined" onClick={addVariant}>
-              Add Variant
-            </Button>
+            <Tooltip placement="top" arrow disableInteractive title="Add a new variant">
+              <Button size="small" variant="outlined" onClick={addVariant}>
+                Add Variant
+              </Button>
+            </Tooltip>
           </div>
-          <IconButton size="small" onClick={() => setExpanded(!expanded)}>
-            {expanded ? <ExpandMore /> : <ExpandLess />}
-          </IconButton>
+          {edge.data && edge.data.variants.length > 1 && (
+            <IconButton size="small" onClick={() => setExpanded(!expanded)}>
+              {expanded ? (
+                <Tooltip placement="top" arrow disableInteractive title="Hide variants">
+                  <ExpandMore />
+                </Tooltip>
+              ) : (
+                <Tooltip placement="top" arrow disableInteractive title="Show variants">
+                  <ExpandLess />
+                </Tooltip>
+              )}
+            </IconButton>
+          )}
         </Stack>
         {expanded &&
           edge.data &&
@@ -144,12 +156,15 @@ type ToggleButtonProps = {
   iconOff: React.ReactElement;
   value: boolean;
   onToggle: (value: boolean) => void;
+  tooltip?: string;
 };
-export const ToggleButtonComponent: React.FC<ToggleButtonProps> = ({ iconOn, iconOff, value, onToggle }) => {
+export const ToggleButtonComponent: React.FC<ToggleButtonProps> = ({ iconOn, iconOff, value, onToggle, tooltip }) => {
   return (
-    <IconButton size="small" onClick={() => onToggle(!value)}>
-      {value ? iconOn : iconOff}
-    </IconButton>
+    <Tooltip placement="top" arrow disableInteractive title={tooltip}>
+      <IconButton size="small" onClick={() => onToggle(!value)}>
+        {value ? iconOn : iconOff}
+      </IconButton>
+    </Tooltip>
   );
 };
 
@@ -159,8 +174,10 @@ type FileUploadProps = {
   value: string;
   onSet: (filename: string) => void;
   onReset: () => void;
+  label1?: string;
+  label2?: string;
 };
-export const FileUploadComponent: React.FC<FileUploadProps> = ({ value, onSet, onReset }) => {
+export const FileUploadComponent: React.FC<FileUploadProps> = ({ value, onSet, onReset, label1, label2 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -192,21 +209,27 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({ value, onSet, o
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <IconButton size="small" color={value ? 'default' : 'warning'}>
-                <Mail fontSize="small" />
-              </IconButton>
+              <Tooltip placement="top" arrow disableInteractive title={value ? `${label1} template configured` : `${label1} template not configured. Click the upload icon to configure an ${label2} template.`}>
+                <IconButton size="small" color={value ? 'default' : 'warning'}>
+                  <Mail fontSize="small" />
+                </IconButton>
+              </Tooltip>
             </InputAdornment>
           ),
           endAdornment: (
             <InputAdornment position="end">
               {value && (
-                <IconButton size="small" onClick={handleClear}>
-                  <Clear />
-                </IconButton>
+                <Tooltip placement="top" arrow disableInteractive title={`Remove ${label2} template`}>
+                  <IconButton size="small" onClick={handleClear}>
+                    <Clear />
+                  </IconButton>
+                </Tooltip>
               )}
-              <IconButton size="small" onClick={handleUploadClick}>
-                <Upload />
-              </IconButton>
+              <Tooltip placement="top" arrow disableInteractive title={`Upload ${label2} template`}>
+                <IconButton size="small" onClick={handleUploadClick}>
+                  <Upload />
+                </IconButton>
+              </Tooltip>
             </InputAdornment>
           ),
         }}
@@ -220,15 +243,21 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({ value, onSet, o
 
 // ------------------------------------------------------------------------------------------------
 
+// eslint-disable-next-line react-refresh/only-export-components
+export const LABELS: Record<ProcessConnection, string> = {
+  [ProcessConnection.AS2]: 'AS2',
+  [ProcessConnection.SFTP_INTERNAL]: 'SFTP Internal',
+  [ProcessConnection.SFTP_EXTERNAL]: 'SFTP External',
+  [ProcessConnection.HTTP]: 'HTTP',
+  [ProcessConnection.VAN]: 'VAN',
+  [ProcessConnection.WEBHOOK]: 'Web Hook',
+};
+
 type ConstraintsProps = {
   connections: ProcessConnection[];
-  origins: ProcessOrigin[];
-  directions: ProcessDirection[];
   setConnections: (connections: ProcessConnection[]) => void;
-  setOrigins: (origins: ProcessOrigin[]) => void;
-  setDirections: (directions: ProcessDirection[]) => void;
 };
-export const ConstraintsComponent: React.FC<ConstraintsProps> = ({ connections, origins, directions, setConnections, setDirections, setOrigins }) => {
+export const ConstraintsComponent: React.FC<ConstraintsProps> = ({ connections, setConnections }) => {
   const [anchorEl, setAnchorEl] = useState<HTMLDivElement | null>(null);
   const toggleConnectionConstraint = useCallback(
     (value: ProcessConnection) => {
@@ -265,33 +294,16 @@ export const ConstraintsComponent: React.FC<ConstraintsProps> = ({ connections, 
   //   [setOrigins],
   // );
 
-  const LABELS: Record<ProcessConnection | ProcessDirection | ProcessOrigin, string> = {
-    [ProcessConnection.AS2]: 'AS2',
-    [ProcessConnection.SFTP_INTERNAL]: 'SFTP Internal',
-    [ProcessConnection.SFTP_EXTERNAL]: 'SFTP External',
-    [ProcessConnection.HTTP]: 'HTTP',
-    [ProcessConnection.VAN]: 'VAN',
-    [ProcessConnection.WEBHOOK]: 'Web Hook',
-    [ProcessDirection.INBOUND]: 'Inbound',
-    [ProcessDirection.OUTBOUND]: 'Outbound',
-    [ProcessOrigin.INTERNAL]: 'Internal',
-    [ProcessOrigin.EXTERNAL]: 'External',
-  };
-
   return (
     <>
-      <IconButton size="small">{connections.length > 0 || origins.length > 0 || directions.length > 0 ? <Lock color="error" /> : <LockOpen />}</IconButton>
+      <Tooltip placement="top" arrow disableInteractive title={connections.length > 0 ? 'Connection constraints applied' : 'No connection constraints'}>
+        <IconButton size="small">{connections.length > 0 ? <Lock color="error" /> : <LockOpen />}</IconButton>
+      </Tooltip>
       <div onClick={ev => setAnchorEl(ev.currentTarget)} style={{ width: '300px', marginTop: 'auto', marginBottom: 'auto' }}>
         {connections.map(connection => (
           <Chip key={connection} onDelete={() => setConnections(connections.filter(it => it !== connection))} label={LABELS[connection]} size="small" variant="outlined" color="default" />
         ))}
-        {origins.map(origin => (
-          <Chip key={origin} onDelete={() => setOrigins(origins.filter(it => it !== origin))} label={LABELS[origin]} size="small" variant="outlined" color="default" />
-        ))}
-        {directions.map(direction => (
-          <Chip key={direction} label={LABELS[direction]} onDelete={() => setDirections(directions.filter(it => it !== direction))} size="small" variant="outlined" color="default" />
-        ))}
-        {connections.length === 0 && origins.length === 0 && directions.length === 0 && <Chip label="Add constraints" size="small" variant="outlined" color="default" />}
+        {connections.length === 0 && <Chip label="Add constraints" size="small" variant="outlined" color="default" />}
       </div>
       <Popover
         open={!!anchorEl}
@@ -432,43 +444,55 @@ const VariantComponent: React.FC<VariantProps> = ({ edgeId, index, variant, show
     [edgeId, index, updateEdge],
   );
 
-  const setDirections = useCallback(
-    (directions: ProcessDirection[]) => {
-      updateEdge(edgeId, draft => {
-        draft.data = draft.data ?? {
-          isEmailAction: false,
-          variants: [],
-        };
-        draft.data.variants[index].constraintsDirectionsIn = directions;
-      });
-    },
-    [edgeId, index, updateEdge],
-  );
-
-  const setOrigins = useCallback(
-    (origins: ProcessOrigin[]) => {
-      updateEdge(edgeId, draft => {
-        draft.data = draft.data ?? {
-          isEmailAction: false,
-          variants: [],
-        };
-        draft.data.variants[index].constraintsOriginsIn = origins;
-      });
-    },
-    [edgeId, index, updateEdge],
-  );
-
   return (
     <>
-      {showName && <TextField label="Variant name" size="small" variant="standard" value={variant.label} onChange={ev => setName(ev.target.value)} style={{ width: '200px' }} inputProps={{ style: { height: '26px' } }} />}
-      {showTemplates && <FileUploadComponent value={variant.emailTemplate} onSet={setEmailTemplate} onReset={() => setEmailTemplate('')} />}
-      {showTemplates && <ToggleButtonComponent iconOff={<AlarmOutlined />} iconOn={<AlarmOnOutlined />} value={variant.hasReminder} onToggle={setHasReminder} />}
-      {variant.hasReminder && showTemplates && <FileUploadComponent value={variant.reminderEmailTemplate} onSet={setReminderEmailTemplate} onReset={() => setReminderEmailTemplate('')} />}
-      <ConstraintsComponent connections={variant.constraintsConnectionsIn} origins={variant.constraintsOriginsIn} directions={variant.constraintsDirectionsIn} setConnections={setConnections} setOrigins={setOrigins} setDirections={setDirections} />
+      {showName && (
+        <Tooltip placement="top" arrow disableInteractive title="Variant name is for display purposes only">
+          <TextField //
+            label="Variant name"
+            size="small"
+            variant="standard"
+            value={variant.label}
+            onChange={ev => setName(ev.target.value)}
+            style={{ width: '200px' }}
+            inputProps={{ style: { height: '26px' } }}
+          />
+        </Tooltip>
+      )}
+      {showTemplates && (
+        <FileUploadComponent //
+          value={variant.emailTemplate}
+          onSet={setEmailTemplate}
+          onReset={() => setEmailTemplate('')}
+          label1="Email"
+          label2="email"
+        />
+      )}
+      {showTemplates && (
+        <ToggleButtonComponent //
+          iconOff={<AlarmOutlined />}
+          iconOn={<AlarmOnOutlined />}
+          value={variant.hasReminder}
+          onToggle={setHasReminder}
+          tooltip={variant.hasReminder ? 'Click to disable reminder for this variant' : 'Click to enable reminder for this variant'}
+        />
+      )}
+      {variant.hasReminder && showTemplates && (
+        <FileUploadComponent //
+          value={variant.reminderEmailTemplate}
+          onSet={setReminderEmailTemplate}
+          onReset={() => setReminderEmailTemplate('')}
+          label1="Reminder email"
+          label2="reminder email"
+        />
+      )}
+      <ConstraintsComponent connections={variant.constraintsConnectionsIn} setConnections={setConnections} />
       {showRemove && (
-        <IconButton onClick={remove}>
-          <Clear />
-        </IconButton>
+        <Tooltip placement="top" arrow disableInteractive title="Remove this variant">
+          <IconButton onClick={remove}>
+            <Clear />
+          </IconButton>
+        </Tooltip>
       )}
     </>
   );

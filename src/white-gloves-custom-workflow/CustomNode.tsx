@@ -1,4 +1,4 @@
-import { Button, IconButton, Stack } from '@mui/material';
+import { Button, IconButton, Stack, Tooltip } from '@mui/material';
 import classNames from 'classnames';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Handle, NodeProps, NodeToolbar, Position, useEdges } from 'reactflow';
@@ -128,55 +128,42 @@ export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging,
         <div onDoubleClick={onContentDoubleClick} className="content">
           <span className="label">{isEditing ? <input ref={ref} autoFocus value={newLabel} onChange={onInputChange} onKeyDown={onInputKeyDown} onBlur={onInputBlur} /> : label}</span>
           {hasReminders && (
-            <IconButton size="small" color={reminderColor} style={{ paddingTop: 0, paddingBottom: 0 }}>
-              <AlarmOutlined fontSize="small" />
-            </IconButton>
+            <Tooltip placement="top" arrow disableInteractive title="Reminders are set for this state.">
+              <IconButton size="small" color={reminderColor} style={{ paddingTop: 0, paddingBottom: 0 }}>
+                <AlarmOutlined fontSize="small" />
+              </IconButton>
+            </Tooltip>
           )}
         </div>
         {handles}
-        {/* {type !== Type.START && <Handle className="handle" id="top1Tgt" type="target" position={Position.Top} style={{ translate: -30 }} />}
-        {type !== Type.START && <Handle className="handle" id="top2Tgt" type="target" position={Position.Top} />}
-        {type !== Type.START && <Handle className="handle" id="top3Tgt" type="target" position={Position.Top} style={{ translate: +30 }} />}
-        {type !== Type.START && <Handle className="handle" id="top4Tgt" type="target" position={Position.Top} style={{ translate: -60 }} />}
-        {type !== Type.START && <Handle className="handle" id="top5Tgt" type="target" position={Position.Top} style={{ translate: +60 }} />}
-
-        {type !== Type.START && <Handle className="handle" id="leftTgt" type="target" position={Position.Left} />}
-        {type !== Type.START && <Handle className="handle" id="rightTgt" type="target" position={Position.Right} />}
-
-        {type !== Type.START && <Handle className="handle" id="bottom1Tgt" type="target" position={Position.Bottom} style={{ translate: -30 }} />}
-        {type !== Type.START && <Handle className="handle" id="bottom2Tgt" type="target" position={Position.Bottom} />}
-        {type !== Type.START && <Handle className="handle" id="bottom3Tgt" type="target" position={Position.Bottom} style={{ translate: +30 }} />}
-        {type !== Type.START && <Handle className="handle" id="bottom4Tgt" type="target" position={Position.Bottom} style={{ translate: -60 }} />}
-        {type !== Type.START && <Handle className="handle" id="bottom5Tgt" type="target" position={Position.Bottom} style={{ translate: +60 }} />}
-
-        {type !== Type.DONE && <Handle className="handle" id="top1Src" type="source" position={Position.Top} style={{ translate: -30 }} />}
-        {type !== Type.DONE && <Handle className="handle" id="top2Src" type="source" position={Position.Top} />}
-        {type !== Type.DONE && <Handle className="handle" id="top3Src" type="source" position={Position.Top} style={{ translate: +30 }} />}
-
-        {type !== Type.DONE && <Handle className="handle" id="leftSrc" type="source" position={Position.Left} />}
-        {type !== Type.DONE && <Handle className="handle" id="rightSrc" type="source" position={Position.Right} />}
-
-        {type !== Type.DONE && <Handle className="handle" id="bottom1Src" type="source" position={Position.Bottom} style={{ translate: -30 }} />}
-        {type !== Type.DONE && <Handle className="handle" id="bottom2Src" type="source" position={Position.Bottom} />}
-        {type !== Type.DONE && <Handle className="handle" id="bottom3Src" type="source" position={Position.Bottom} style={{ translate: +30 }} />} */}
       </div>
       <NodeToolbar onDoubleClick={prevent} position={Position.Top} offset={20} className={classNames('node-toolbar', selected && 'selected', dragging && 'dragging')}>
         <Stack direction="row" spacing={1}>
-          <Button className={classNames(Type.START, type === Type.START && 'selected')} variant="outlined" size="small" onClick={() => setType(Type.START)}>
-            Start
-          </Button>
-          <Button className={classNames(Type.NORMAL, type === Type.NORMAL && 'selected')} variant="outlined" size="small" onClick={() => setType(Type.NORMAL)}>
-            Normal
-          </Button>
-          <Button className={classNames(Type.AWAITING_REPLY, type === Type.AWAITING_REPLY && 'selected')} variant="outlined" size="small" onClick={() => setType(Type.AWAITING_REPLY)}>
-            Awaiting reply
-          </Button>
-          <Button className={classNames(Type.ERROR, type === Type.ERROR && 'selected')} variant="outlined" size="small" onClick={() => setType(Type.ERROR)}>
-            Error
-          </Button>
-          <Button className={classNames(Type.DONE, type === Type.DONE && 'selected')} variant="outlined" size="small" onClick={() => setType(Type.DONE)}>
-            Done
-          </Button>
+          <Tooltip placement="top" arrow disableInteractive title="Change this state to START. It is the first state in a workflow and can only have actions leading away from it.">
+            <Button className={classNames(Type.START, type === Type.START && 'selected')} variant="outlined" size="small" onClick={() => setType(Type.START)}>
+              Start
+            </Button>
+          </Tooltip>
+          <Tooltip placement="top" arrow disableInteractive title="Change this state to REGULAR. This indicates to WG user that migration is progressing as expected.">
+            <Button className={classNames(Type.NORMAL, type === Type.NORMAL && 'selected')} variant="outlined" size="small" onClick={() => setType(Type.NORMAL)}>
+              Normal
+            </Button>
+          </Tooltip>
+          <Tooltip placement="top" arrow disableInteractive title="Change this state to AWAITING REPLY. This indicates to WG user a reply is being awaited from the partner.">
+            <Button className={classNames(Type.AWAITING_REPLY, type === Type.AWAITING_REPLY && 'selected')} variant="outlined" size="small" onClick={() => setType(Type.AWAITING_REPLY)}>
+              Awaiting reply
+            </Button>
+          </Tooltip>
+          <Tooltip placement="top" arrow disableInteractive title="Change this state to ERROR. This indicates to WG user that an intervention is required to bring the migration back on track.">
+            <Button className={classNames(Type.ERROR, type === Type.ERROR && 'selected')} variant="outlined" size="small" onClick={() => setType(Type.ERROR)}>
+              Error
+            </Button>
+          </Tooltip>
+          <Tooltip placement="top" arrow disableInteractive title="Change this state to DONE. This indicates to WG user that the migration is complete. It is the last state in a workflow and can only have actions leading to it. In order to support a particular connection type, there must be a valid path from START to DONE for that connection type.">
+            <Button className={classNames(Type.DONE, type === Type.DONE && 'selected')} variant="outlined" size="small" onClick={() => setType(Type.DONE)}>
+              Done
+            </Button>
+          </Tooltip>
         </Stack>
       </NodeToolbar>
     </>

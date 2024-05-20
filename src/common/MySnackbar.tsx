@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { AlertProps, SnackbarProps } from '@mui/material';
 import { Alert, IconButton, Snackbar, SnackbarCloseReason, SnackbarOrigin } from '@mui/material';
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';

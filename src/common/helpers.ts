@@ -1,3 +1,4 @@
+import { useRef, useEffect } from 'react';
 import { AtomEffect } from 'recoil';
 
 export function prevent(ev: React.MouseEvent) {
@@ -27,4 +28,12 @@ export function localStorageEffect<T>({ key, parse, stringify }: LocalStorageEff
       }
     });
   };
+}
+
+export function usePrevious<T>(value: T): T | undefined {
+  const ref = useRef<T>();
+  useEffect(() => {
+    ref.current = value;
+  }, [value]);
+  return ref.current;
 }

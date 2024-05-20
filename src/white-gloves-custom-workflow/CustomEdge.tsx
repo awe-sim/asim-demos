@@ -1,5 +1,5 @@
 import { ContentCopyOutlined, Lock, MailOutline } from '@mui/icons-material';
-import { ListItem, ListItemIcon, ListItemText } from '@mui/material';
+import { ListItem, ListItemIcon, ListItemText, Tooltip } from '@mui/material';
 import classNames from 'classnames';
 import { useEffect, useMemo } from 'react';
 import { BaseEdge, EdgeLabelRenderer, EdgeProps, MarkerType, Position, getBezierPath, useReactFlow, useViewport } from 'reactflow';
@@ -89,19 +89,25 @@ export const CustomEdge: React.FC<EdgeProps<Action>> = ({ id, sourceX, sourceY, 
         <div onDoubleClick={prevent} className={classNames('edge-label', selected && 'selected')} style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` }}>
           <ListItem dense disablePadding style={{ opacity: !shouldMakeTransparent ? 1 : 0.25 }}>
             {isEmailAction && (
-              <ListItemIcon>
-                <MailOutline color="error" />
-              </ListItemIcon>
+              <Tooltip placement="top" arrow disableInteractive title="Action is an email action">
+                <ListItemIcon>
+                  <MailOutline color="error" />
+                </ListItemIcon>
+              </Tooltip>
             )}
             {hasConstraints && (
-              <ListItemIcon>
-                <Lock />
-              </ListItemIcon>
+              <Tooltip placement="top" arrow disableInteractive title="Action has one or more connection constraints">
+                <ListItemIcon>
+                  <Lock />
+                </ListItemIcon>
+              </Tooltip>
             )}
             {data && data.variants.length > 1 && (
-              <ListItemIcon>
-                <ContentCopyOutlined />
-              </ListItemIcon>
+              <Tooltip placement="top" arrow disableInteractive title="Action has multiple variants">
+                <ListItemIcon>
+                  <ContentCopyOutlined />
+                </ListItemIcon>
+              </Tooltip>
             )}
             <ListItemText>{label}</ListItemText>
           </ListItem>
