@@ -89,27 +89,36 @@ export const CustomEdge: React.FC<EdgeProps<Action>> = ({ id, sourceX, sourceY, 
         <div onDoubleClick={prevent} className={classNames('edge-label', selected && 'selected')} style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` }}>
           <ListItem dense disablePadding style={{ opacity: !shouldMakeTransparent ? 1 : 0.25 }}>
             {isEmailAction && (
-              <Tooltip placement="top" arrow disableInteractive title="Action is an email action">
-                <ListItemIcon>
-                  <MailOutline color="error" />
-                </ListItemIcon>
-              </Tooltip>
+              <ListItemIcon>
+                <MailOutline color="error" />
+              </ListItemIcon>
             )}
             {hasConstraints && (
-              <Tooltip placement="top" arrow disableInteractive title="Action has one or more connection constraints">
-                <ListItemIcon>
-                  <Lock />
-                </ListItemIcon>
-              </Tooltip>
+              <ListItemIcon>
+                <Lock />
+              </ListItemIcon>
             )}
             {data && data.variants.length > 1 && (
-              <Tooltip placement="top" arrow disableInteractive title="Action has multiple variants">
-                <ListItemIcon>
-                  <ContentCopyOutlined />
-                </ListItemIcon>
-              </Tooltip>
+              <ListItemIcon>
+                <ContentCopyOutlined />
+              </ListItemIcon>
             )}
-            <Tooltip placement="top" arrow disableInteractive title={label}>
+            <Tooltip
+              placement="top"
+              arrow
+              disableInteractive
+              title={
+                <>
+                  Action: <b>{label}</b>
+                  {isEmailAction || hasConstraints || (data && data.variants.length > 1) ? (
+                    <ul>
+                      {isEmailAction && <li>Email action</li>}
+                      {hasConstraints && <li>Has constraints</li>}
+                      {data && data.variants.length > 1 && <li>{data.variants.length} variants</li>}
+                    </ul>
+                  ) : null}
+                </>
+              }>
               <ListItemText>{label}</ListItemText>
             </Tooltip>
           </ListItem>

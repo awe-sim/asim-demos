@@ -93,8 +93,8 @@ export const STATE_MACHINE: StateMachine = new Map([
     {
       [EUser.SYSTEM]: new Map(),
       [EUser.PLQ]: new Map([
-        [EAction.RETRY_NOW, EState.IN_PROGRESS],
-        [EAction.RETRY_LATER, EState.SCHEDULED],
+        // [EAction.RETRY_NOW, EState.IN_PROGRESS],
+        // [EAction.RETRY_LATER, EState.SCHEDULED],
       ]),
       [EUser.PARTNER]: new Map(),
     },
@@ -119,7 +119,11 @@ export const STATE_MACHINE: StateMachine = new Map([
     {
       [EUser.SYSTEM]: new Map(),
       [EUser.PLQ]: new Map(),
-      [EUser.PARTNER]: new Map([[EAction.REOPEN, EState.REQUESTED]]),
+      [EUser.PARTNER]: new Map([
+        //
+        [EAction.REOPEN, EState.REQUESTED],
+        [EAction.CANCEL, EState.CANCELLED],
+      ]),
     },
   ],
 
@@ -234,8 +238,10 @@ export class Root {
         case EAction.SYSTEM_RUN:
           draft.migrations[index].state = nextState;
           break;
-        case EAction.REOPEN:
-          draft.migrations.push(new Migration(v4(), `${migration.name} (Reopened)`, migration.user, nextState));
+          case EAction.REOPEN:
+          draft.migrations[index].state = nextState;
+          draft.migrations[index].name = `${migration.name} (Reopened)`
+          // draft.migrations.push(new Migration(v4(), `${migration.name} (Reopened)`, migration.user, nextState));
           break;
         case EAction.RETRY_NOW:
         case EAction.RETRY_LATER:
