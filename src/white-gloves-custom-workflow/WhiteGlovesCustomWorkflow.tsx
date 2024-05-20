@@ -174,7 +174,6 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
     ({ nodes, edges }: { nodes: Node<State>[]; edges: Edge<Action>[] }) => {
       setSelectedNodeIds(nodes.map(it => it.id));
       setSelectedEdgeIds(edges.map(it => it.id));
-      console.log(flag, nodes.length, prevSelectedNodesCount);
 
       if (flag === Flag.STATE_CREATED) {
         if (nodes.length === 0 && edges.length === 0) {
@@ -411,8 +410,6 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
     return `${tip1} ${tip2}`;
   }
 
-  console.log(selectedProcessConnection);
-
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
       <svg style={{ position: 'absolute', top: 0, left: 0 }}>
@@ -474,11 +471,6 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
               <Tooltip placement="top" arrow disableInteractive title="Initialize the workflow with a predefined JSON">
                 <Button variant="outlined" size="small" onClick={initialize} onDoubleClick={prevent}>
                   Initialize WG Workflow
-                </Button>
-              </Tooltip>
-              <Tooltip placement="top" arrow disableInteractive title="Initialize the workflow with a predefined JSON">
-                <Button variant="outlined" size="small" onClick={initialize} onDoubleClick={prevent}>
-                  Initialize Sample Workflow
                 </Button>
               </Tooltip>
             </Stack>
