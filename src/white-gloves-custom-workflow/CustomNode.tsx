@@ -1,6 +1,6 @@
-import { Button, IconButton, Stack, Tooltip } from '@mui/material';
+import { Autocomplete, AutocompleteValue, Button, IconButton, ListItem, Stack, TextField, Tooltip } from '@mui/material';
 import classNames from 'classnames';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { SyntheticEvent, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Handle, NodeProps, NodeToolbar, Position, useEdges } from 'reactflow';
 import { useReactFlowHooks } from './hooks';
 import { Action, State, Type } from './types';
@@ -10,11 +10,68 @@ import { AlarmOutlined } from '@mui/icons-material';
 import { deadEndNodeIdsState, selectedProcessConnectionState, visitedIdsState } from './states';
 import { useRecoilValue } from 'recoil';
 
+enum AutoCompleteOptions {
+  START = 'Start',
+  MIGRATION_LETTER_SENT = 'Migration letter sent',
+  CONNECTION_INFO_RECEIVED = 'Connection info received',
+  CONNECTION_OK = 'Connection OK',
+  CONNECTION_FAILED = 'Connection failed',
+  CONNECTION_TEST_DATE_PROPOSED = 'Connection test date proposed',
+  CONNECTION_TEST_DATE_CONFIRMED = 'Connection test date confirmed',
+  GOLIVE_T_14_LETTER_SENT = 'GoLive T-14 letter sent',
+  GOLIVE_T_14_LETTER_ACKNOWLEDGED = 'GoLive T-14 letter acknowledged',
+  GOLIVE_T_5_LETTER_SENT = 'GoLive T-5 letter sent',
+  GOLIVE_T_5_LETTER_ACKNOWLEDGED = 'GoLive T-5 letter acknowledged',
+  GOLIVE_T_1_LETTER_SENT = 'GoLive T-1 letter sent',
+  GOLIVE_T_1_LETTER_ACKNOWLEDGED = 'GoLive T-1 letter acknowledged',
+  GOLIVE = 'GoLive',
+  LIVE_LOAD_REQUESTED = 'Live load requested',
+  MIGRATION_COMPLETE = 'Migration complete',
+}
+
+const TYPE_MAP: Record<AutoCompleteOptions, Type> = {
+  [AutoCompleteOptions.START]: Type.START,
+  [AutoCompleteOptions.MIGRATION_LETTER_SENT]: Type.NORMAL,
+  [AutoCompleteOptions.CONNECTION_INFO_RECEIVED]: Type.AWAITING_REPLY,
+  [AutoCompleteOptions.CONNECTION_OK]: Type.NORMAL,
+  [AutoCompleteOptions.CONNECTION_FAILED]: Type.ERROR,
+  [AutoCompleteOptions.CONNECTION_TEST_DATE_PROPOSED]: Type.AWAITING_REPLY,
+  [AutoCompleteOptions.CONNECTION_TEST_DATE_CONFIRMED]: Type.NORMAL,
+  [AutoCompleteOptions.GOLIVE_T_14_LETTER_SENT]: Type.AWAITING_REPLY,
+  [AutoCompleteOptions.GOLIVE_T_14_LETTER_ACKNOWLEDGED]: Type.NORMAL,
+  [AutoCompleteOptions.GOLIVE_T_5_LETTER_SENT]: Type.AWAITING_REPLY,
+  [AutoCompleteOptions.GOLIVE_T_5_LETTER_ACKNOWLEDGED]: Type.NORMAL,
+  [AutoCompleteOptions.GOLIVE_T_1_LETTER_SENT]: Type.AWAITING_REPLY,
+  [AutoCompleteOptions.GOLIVE_T_1_LETTER_ACKNOWLEDGED]: Type.NORMAL,
+  [AutoCompleteOptions.GOLIVE]: Type.NORMAL,
+  [AutoCompleteOptions.LIVE_LOAD_REQUESTED]: Type.AWAITING_REPLY,
+  [AutoCompleteOptions.MIGRATION_COMPLETE]: Type.DONE,
+}
+
+const AUTOCOMPLETE_OPTIONS = [
+  //
+  AutoCompleteOptions.START,
+  AutoCompleteOptions.MIGRATION_LETTER_SENT,
+  AutoCompleteOptions.CONNECTION_INFO_RECEIVED,
+  AutoCompleteOptions.CONNECTION_OK,
+  AutoCompleteOptions.CONNECTION_FAILED,
+  AutoCompleteOptions.CONNECTION_TEST_DATE_PROPOSED,
+  AutoCompleteOptions.CONNECTION_TEST_DATE_CONFIRMED,
+  AutoCompleteOptions.GOLIVE_T_14_LETTER_SENT,
+  AutoCompleteOptions.GOLIVE_T_14_LETTER_ACKNOWLEDGED,
+  AutoCompleteOptions.GOLIVE_T_5_LETTER_SENT,
+  AutoCompleteOptions.GOLIVE_T_5_LETTER_ACKNOWLEDGED,
+  AutoCompleteOptions.GOLIVE_T_1_LETTER_SENT,
+  AutoCompleteOptions.GOLIVE_T_1_LETTER_ACKNOWLEDGED,
+  AutoCompleteOptions.GOLIVE,
+  AutoCompleteOptions.LIVE_LOAD_REQUESTED,
+  AutoCompleteOptions.MIGRATION_COMPLETE,
+];
+
 export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging, data: { label, type, isEditing } }) => {
   //
   const { updateNode } = useReactFlowHooks();
   const edges = useEdges<Action>();
-  const [newLabel, setNewLabel] = useState(label);
   const ref = useRef<HTMLInputElement>(null);
 
   const visitedIds = useRecoilValue(visitedIdsState);
@@ -49,28 +106,23 @@ export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging,
     [id, updateNode],
   );
 
-  const onInputChange = useCallback<React.ChangeEventHandler<HTMLInputElement>>(ev => {
-    setNewLabel(ev.target.value);
-  }, []);
-
-  const onInputKeyDown = useCallback<React.KeyboardEventHandler<HTMLInputElement>>(
-    ev => {
-      if (ev.key === 'Enter') {
-        updateNode(id, draft => {
-          draft.data.label = newLabel;
-          draft.data.isEditing = false;
-        });
-      }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const onAutoCompleteChange = useCallback(
+    (_ev: SyntheticEvent, value: AutocompleteValue<string, false, true, true>) => {
+      updateNode(id, draft => {
+        draft.data.label = value;
+        draft.data.type = TYPE_MAP[value as AutoCompleteOptions] ?? draft.data.type;
+        draft.data.isEditing = false;
+      });
     },
-    [id, newLabel, updateNode],
+    [id, updateNode],
   );
 
   const onInputBlur = useCallback<React.FocusEventHandler>(() => {
     updateNode(id, draft => {
-      draft.data.label = newLabel;
       draft.data.isEditing = false;
     });
-  }, [id, newLabel, updateNode]);
+  }, [id, updateNode]);
 
   const setType = useCallback(
     (type: Type) => {
@@ -130,24 +182,52 @@ export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging,
         arrow
         disableInteractive
         title={
-          deadEndNodeIds.has(id) ? (
-            <>
-              {label}
-              <p>Dead end stage! Process reaching this state will not be able to progress any further!</p>
-            </>
-          ) : (
-            label
-          )
+          <>
+            Stage: <b>{label}</b>
+            {hasReminders || deadEndNodeIds.has(id) ? (
+              <ul>
+                {hasReminders && <li>Has reminders</li>}
+                {deadEndNodeIds.has(id) && <li>Dead end! Process arriving at this communication stage will not be able to progress any further!</li>}
+              </ul>
+            ) : null}
+          </>
         }>
         <div className={classNames('custom-node', selected && 'selected', dragging && 'dragging', type, deadEndNodeIds.has(id) && 'dead-end')} tabIndex={-1} style={{ opacity: !shouldMakeTransparent ? 1 : 0.25 }}>
           <div onDoubleClick={onContentDoubleClick} className="content">
-            <span className="label">{isEditing ? <input ref={ref} autoFocus value={newLabel} onChange={onInputChange} onKeyDown={onInputKeyDown} onBlur={onInputBlur} /> : label}</span>
+            {isEditing && (
+              <>
+                <Autocomplete //
+                  id="tags-standard"
+                  freeSolo
+                  disableClearable
+                  autoFocus
+                  value={label}
+                  options={AUTOCOMPLETE_OPTIONS}
+                  onChange={onAutoCompleteChange}
+                  componentsProps={{ popper: { style: { width: 300 } } }}
+                  renderOption={(props, option, { selected }) => (
+                    <ListItem dense disablePadding disableGutters {...props} selected={selected}>
+                      {option}
+                    </ListItem>
+                  )}
+                  renderInput={params => (
+                    <TextField //
+                      {...params}
+                      ref={ref}
+                      autoFocus
+                      variant="standard"
+                      placeholder="Favorites"
+                      onBlur={onInputBlur}
+                    />
+                  )}
+                />
+              </>
+            )}
+            {!isEditing && <span className="label">{label}</span>}
             {hasReminders && (
-              <Tooltip placement="top" arrow disableInteractive title="Reminders are set for this state.">
-                <IconButton size="small" color={reminderColor} style={{ paddingTop: 0, paddingBottom: 0 }}>
-                  <AlarmOutlined fontSize="small" />
-                </IconButton>
-              </Tooltip>
+              <IconButton size="small" color={reminderColor} style={{ paddingTop: 0, paddingBottom: 0 }}>
+                <AlarmOutlined fontSize="small" />
+              </IconButton>
             )}
           </div>
           {handles}

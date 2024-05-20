@@ -265,3 +265,18 @@ input {
   background-color: #404040e0 !important;
   z-index: 1000 !important;
 }
+
+.MuiAutocomplete-root {
+  .MuiTextField-root {
+    .MuiInput-root {
+      .MuiInput-input {
+        padding-top: 0;
+        padding-bottom: 0;
+        font-size: 13px;
+        &::after {
+          display: none;
+        }
+      }
+    }
+  }
+}
