@@ -7,7 +7,7 @@ import { Action, State, Type } from './types';
 import { prevent } from '../common/helpers';
 import { showToast2 } from '../common/MySnackbar';
 import { AlarmOutlined } from '@mui/icons-material';
-import { anySelectedProcessConnectionState, visitedIdsState } from './states';
+import { deadEndNodeIdsState, selectedProcessConnectionState, visitedIdsState } from './states';
 import { useRecoilValue } from 'recoil';
 
 export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging, data: { label, type, isEditing } }) => {
@@ -18,8 +18,9 @@ export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging,
   const ref = useRef<HTMLInputElement>(null);
 
   const visitedIds = useRecoilValue(visitedIdsState);
-  const anySelected = useRecoilValue(anySelectedProcessConnectionState);
-  const shouldMakeTransparent = anySelected && !visitedIds.has(id);
+  const deadEndNodeIds = useRecoilValue(deadEndNodeIdsState);
+  const selectedConnection = useRecoilValue(selectedProcessConnectionState);
+  const shouldMakeTransparent = !!selectedConnection && !visitedIds.has(id);
 
   const hasReminders = edges.some(e => e.target === id && e.data?.isEmailAction && e.data.variants.some(v => v.hasReminder));
   const reminderColor = useMemo(() => {
@@ -124,7 +125,7 @@ export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging,
 
   return (
     <>
-      <div className={classNames('custom-node', selected && 'selected', dragging && 'dragging', type)} tabIndex={-1} style={{ opacity: !shouldMakeTransparent ? 1 : 0.25 }}>
+      <div className={classNames('custom-node', selected && 'selected', dragging && 'dragging', type, deadEndNodeIds.has(id) && 'dead-end')} tabIndex={-1} style={{ opacity: !shouldMakeTransparent ? 1 : 0.25 }}>
         <div onDoubleClick={onContentDoubleClick} className="content">
           <span className="label">{isEditing ? <input ref={ref} autoFocus value={newLabel} onChange={onInputChange} onKeyDown={onInputKeyDown} onBlur={onInputBlur} /> : label}</span>
           {hasReminders && (

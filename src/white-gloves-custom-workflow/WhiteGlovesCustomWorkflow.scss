@@ -130,6 +130,10 @@ input {
     }
   }
 
+  &.dead-end .content {
+    background-color: #ff0000c0 !important;
+  }
+
   &.START {
     .content,
     .handle {

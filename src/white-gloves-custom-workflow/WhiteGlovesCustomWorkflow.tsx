@@ -3,17 +3,20 @@ import { uniqueId } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactFlow, { Background, BackgroundVariant, Controls, Edge, MiniMap, Node, OnConnect, OnEdgeUpdateFunc, OnNodesDelete, OnSelectionChangeFunc, ReactFlowInstance, addEdge, getConnectedEdges, getIncomers, getOutgoers, updateEdge, useEdgesState, useNodesState, useReactFlow } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
+import { useRecoilState, useSetRecoilState } from 'recoil';
 import { v4 } from 'uuid';
 import { prevent, usePrevious } from '../common/helpers';
 import { showToast2 } from '../common/MySnackbar';
 import { CustomEdge } from './CustomEdge';
 import { CustomEdgeToolbarPlaceholderComponent } from './CustomEdgeToolbar';
 import { CustomNode } from './CustomNode';
-import { Flag, flagState, noneSelectedProcessConnectionsState, selectedEdgeIdsState, selectedNodeIdsState, selectedProcessConnectionsState, visitedIdsState } from './states';
+import { deadEndNodeIdsState, Flag, flagState, selectedEdgeIdsState, selectedNodeIdsState, selectedProcessConnectionState, visitedIdsState } from './states';
 import { Action, ProcessConnection, State, Type } from './types';
 import './WhiteGlovesCustomWorkflow.scss';
 import { CheckCircle, Warning } from '@mui/icons-material';
+import { Graph } from './graph';
+
+const CONNECTIONS: ProcessConnection[] = [ProcessConnection.AS2, ProcessConnection.HTTP, ProcessConnection.SFTP_EXTERNAL, ProcessConnection.SFTP_INTERNAL, ProcessConnection.VAN, ProcessConnection.WEBHOOK];
 
 const WORKFLOW_JSON = {
   nodes: [
@@ -159,7 +162,7 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
         type: 'CustomNode',
         selected: true,
       });
-      setFlag(Flag.STATE_CREATED);
+      setFlag(value => (value === Flag.FIRST_TIME ? Flag.STATE_CREATED : value));
     },
     [addNodes, screenToFlowPosition, setFlag],
   );
@@ -200,14 +203,12 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
       if (!sourceNode || !targetNode) return;
       if (edges.some(edge => edge.source === source && edge.target === target)) {
         showToast2('Connection already exists');
-        // setEdges(edges => edges.filter(edge => edge.source !== source || edge.target !== target));
         return;
       }
       setEdges(edges =>
         addEdge(
           {
             type: 'CustomEdge',
-            // type: undefined,
             id: v4(),
             source,
             target,
@@ -269,20 +270,17 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
   // const getClosestEdge = useCallback((node: Node<State>) => {
   //   const { nodeInternals } = store.getState();
   //   const storeNodes = Array.from(nodeInternals.values());
-
   //   const closestNode = storeNodes.reduce(
   //     (res, n) => {
   //       if (n.id !== node.id) {
   //         const dx = (n.positionAbsolute?.x ?? 0) - (node.positionAbsolute?.x ?? 0);
   //         const dy = (n.positionAbsolute?.y ?? 0) - (node.positionAbsolute?.y ?? 0);
   //         const d = Math.sqrt(dx * dx + dy * dy);
-
   //         if (d < res.distance && d < 200) {
   //           res.distance = d;
   //           res.node = n;
   //         }
   //       }
-
   //       return res;
   //     },
   //     {
@@ -290,13 +288,10 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
   //       node: null,
   //     },
   //   );
-
   //   if (!closestNode.node) {
   //     return null;
   //   }
-
   //   const closeNodeIsSource = closestNode.node.positionAbsolute.x < node.positionAbsolute.x;
-
   //   return {
   //     id: closeNodeIsSource ? `${closestNode.node.id}-${node.id}` : `${node.id}-${closestNode.node.id}`,
   //     source: closeNodeIsSource ? closestNode.node.id : node.id,
@@ -307,15 +302,12 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
   // const onNodeDrag = useCallback<NodeDragHandler>(
   //   (_, node) => {
   //     const closeEdge = getClosestEdge(node);
-
   //     setEdges(es => {
   //       const nextEdges = es.filter(e => e.className !== 'temp');
-
   //       if (closeEdge && !nextEdges.find(ne => ne.source === closeEdge.source && ne.target === closeEdge.target)) {
   //         closeEdge.className = 'temp';
   //         nextEdges.push(closeEdge);
   //       }
-
   //       return nextEdges;
   //     });
   //   },
@@ -325,15 +317,12 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
   // const onNodeDragStop = useCallback<NodeDragHandler>(
   //   (_, node) => {
   //     const closeEdge = getClosestEdge(node);
-
   //     setEdges(es => {
   //       const nextEdges = es.filter(e => e.className !== 'temp');
-
   //       if (closeEdge && !nextEdges.find(ne => ne.source === closeEdge.source && ne.target === closeEdge.target)) {
   //         closeEdge.label = uniqueId('Action #')
   //         nextEdges.push(closeEdge);
   //       }
-
   //       return nextEdges;
   //     });
   //   },
@@ -375,99 +364,22 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
     load();
   }, [load]);
 
-  const [selectedProcessConnections, setSelectedProcessConnections] = useRecoilState(selectedProcessConnectionsState);
-  const noneSelectedProcessConnections = useRecoilValue(noneSelectedProcessConnectionsState);
+  const [selectedProcessConnection, setSelectedProcessConnection] = useRecoilState(selectedProcessConnectionState);
   const setVisitedIds = useSetRecoilState(visitedIdsState);
-  const [connectionStatus, setConnectionStatus] = useState<Record<ProcessConnection, boolean>>({
-    [ProcessConnection.AS2]: false,
-    [ProcessConnection.SFTP_INTERNAL]: false,
-    [ProcessConnection.SFTP_EXTERNAL]: false,
-    [ProcessConnection.HTTP]: false,
-    [ProcessConnection.VAN]: false,
-    [ProcessConnection.WEBHOOK]: false,
-  });
+  const setDeadEndNodeIds = useSetRecoilState(deadEndNodeIdsState);
 
-  const toggleSelectedProcessConnection = useCallback(
-    (connection: ProcessConnection) => {
-      setSelectedProcessConnections(values => {
-        if (!values[connection]) {
-          return {
-            [ProcessConnection.AS2]: false,
-            [ProcessConnection.SFTP_INTERNAL]: false,
-            [ProcessConnection.SFTP_EXTERNAL]: false,
-            [ProcessConnection.HTTP]: false,
-            [ProcessConnection.VAN]: false,
-            [ProcessConnection.WEBHOOK]: false,
-            [connection]: true,
-          };
-        } else {
-          return {
-            [ProcessConnection.AS2]: false,
-            [ProcessConnection.SFTP_INTERNAL]: false,
-            [ProcessConnection.SFTP_EXTERNAL]: false,
-            [ProcessConnection.HTTP]: false,
-            [ProcessConnection.VAN]: false,
-            [ProcessConnection.WEBHOOK]: false,
-          };
-        }
-      });
-      // setSelectedProcessConnections(selectedProcessConnections => ({
-      //   ...selectedProcessConnections,
-      //   [connection]: !selectedProcessConnections[connection],
-      // }));
-    },
-    [setSelectedProcessConnections],
-  );
-
-  const getNextEdges = useCallback(
-    (nodeId: string, edgesMap: Map<string, Edge<Action>>): Edge<Action>[] => {
-      const nextEdgeIds = edges.filter(e => e.source === nodeId);
-      const nextEdges = nextEdgeIds.map(e => edgesMap.get(e.id)!);
-      return nextEdges;
-    },
-    [edges],
-  );
-
-  const recursiveVisit = useCallback(
-    (nodeId: string, connection: ProcessConnection, visitedNodeIds: Set<string>, visitedEdgeIds: Set<string>, edgesMap: Map<string, Edge<Action>>) => {
-      visitedNodeIds.add(nodeId);
-      const nextEdges = getNextEdges(nodeId, edgesMap).filter(e => e.data?.variants.some(v => v.constraintsConnectionsIn.length === 0 || v.constraintsConnectionsIn.includes(connection)));
-      nextEdges.forEach(edge => {
-        visitedEdgeIds.add(edge.id);
-        if (!visitedNodeIds.has(edge.target)) {
-          recursiveVisit(edge.target, connection, visitedNodeIds, visitedEdgeIds, edgesMap);
-        }
-      });
-    },
-    [getNextEdges],
-  );
-
-  const process = useCallback(() => {
-    const startingNodes = nodes.filter(node => node.data.type === Type.START);
-    const endingNodes = nodes.filter(node => node.data.type === Type.DONE);
-    const edgesMap = new Map(edges.map(edge => [edge.id, edge]));
-
-    setVisitedIds(new Set<string>());
-
-    [ProcessConnection.AS2, ProcessConnection.SFTP_INTERNAL, ProcessConnection.SFTP_EXTERNAL, ProcessConnection.HTTP, ProcessConnection.VAN, ProcessConnection.WEBHOOK].map(connection => {
-      const visitedNodeIds = new Set<string>();
-      const visitedEdgeIds = new Set<string>();
-      startingNodes.forEach(node => {
-        recursiveVisit(node.id, connection, visitedNodeIds, visitedEdgeIds, edgesMap);
-      });
-      setConnectionStatus(value => ({
-        ...value,
-        [connection]: startingNodes.some(node => visitedNodeIds.has(node.id)) && endingNodes.some(node => visitedNodeIds.has(node.id)),
-      }));
-      if (noneSelectedProcessConnections || selectedProcessConnections[connection]) {
-        setVisitedIds(values => new Set([...values, ...visitedNodeIds, ...visitedEdgeIds]));
-      }
-    });
-  }, [edges, nodes, noneSelectedProcessConnections, recursiveVisit, selectedProcessConnections, setVisitedIds]);
+  const graph = useMemo(() => Graph.create(nodes, edges), [edges, nodes]);
+  const connectionOk = useMemo(() => CONNECTIONS.map(connection => graph.isOk(connection)), [graph]);
 
   useEffect(() => {
-    process();
-  }, [process]);
+    if (selectedProcessConnection) {
+      setVisitedIds(new Set(graph.getVisitableNodes(selectedProcessConnection).concat(graph.getVisitableEdgeIds(selectedProcessConnection))));
+      setDeadEndNodeIds(new Set(graph.getDeadEndNodeIds(selectedProcessConnection)));
+    } else {
+      setVisitedIds(new Set());
+      setDeadEndNodeIds(new Set());
+    }
+  }, [graph, selectedProcessConnection, setDeadEndNodeIds, setVisitedIds]);
 
   function getConnectionLabel(connection: ProcessConnection): string {
     switch (connection) {
@@ -498,6 +410,8 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
     })();
     return `${tip1} ${tip2}`;
   }
+
+  console.log(selectedProcessConnection);
 
   return (
     <div style={{ width: '100vw', height: '100vh' }}>
@@ -569,14 +483,14 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
               </Tooltip>
             </Stack>
             <Stack direction="row" spacing={1}>
-              {[ProcessConnection.AS2, ProcessConnection.SFTP_INTERNAL, ProcessConnection.SFTP_EXTERNAL, ProcessConnection.HTTP, ProcessConnection.VAN, ProcessConnection.WEBHOOK].map(connection => (
-                <Tooltip key={connection} placement="top" arrow disableInteractive title={getConnectionTooltip(connection, connectionStatus[connection], selectedProcessConnections[connection])}>
+              {CONNECTIONS.map((connection, index) => (
+                <Tooltip key={connection} placement="top" arrow disableInteractive title={getConnectionTooltip(connection, connectionOk[index], selectedProcessConnection === connection)}>
                   <Button //
-                    color={connectionStatus[connection] ? 'success' : 'warning'}
-                    endIcon={connectionStatus[connection] ? <CheckCircle /> : <Warning />}
-                    variant={selectedProcessConnections[connection] ? 'contained' : 'outlined'}
+                    color={graph.isOk(connection) ? 'success' : 'warning'}
+                    endIcon={graph.isOk(connection) ? <CheckCircle /> : <Warning />}
+                    variant={selectedProcessConnection === connection ? 'contained' : 'outlined'}
                     size="small"
-                    onClick={() => toggleSelectedProcessConnection(connection)}
+                    onClick={() => setSelectedProcessConnection(value => (value === connection ? undefined : connection))}
                     onDoubleClick={prevent}>
                     {getConnectionLabel(connection)}
                   </Button>
@@ -606,29 +520,41 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
               </ul>
             </>
           )}
-          {flag === Flag.STATE_CONFIGURED && <>
-            <p>Actions are the steps that the WG team can take to move the migration journey of a partner or process forward. Outgoing actions from a stage are available for execution by the WG team for a partner or process at that stage.</p>
-            <p>Now that we have a couple of communication stages defined, we can connect them using actions. To do this, click on the action handle of a communication stage and drag it to the action handle of another communication stage.</p>
-          </>}
-          {flag === Flag.ACTION_CREATED && <>
-            <p>Great! We now have an action connecting two communication stages. Actions can be of several types:</p>
-            <ul>
-              <li>Simple action: This is a regular action that the WG team can execute to move the migration journey of a partner or process forward.</li>
-              <li>Email action: This is an action that sends an email to the partner or process. You can configure email template and reminder details for this action.</li>
-            </ul>
-            <p>Actions can also be configured to be available only only for certain connection types. These are called <b>Action Constraints</b>. Constraints can be configured for:</p>
-            <ul>
-              <li>AS2: Action is available only for partners or processes with an AS2 connection.</li>
-              <li>SFTP Internal: Action is available only for partners or processes with <b>PartnerLinQ</b>'s SFTP connection.</li>
-              <li>SFTP External: Action is available only for partners or processes with <b>partner</b>'s SFTP connection.</li>
-              <li>HTTP: Action is available only for partners or processes with an HTTP connection.</li>
-              <li>VAN: Action is available only for partners or processes with a VAN connection.</li>
-              <li>Webhook: Action is available only for partners or processes with a Webhook connection.</li>
-            </ul>
-          </>}
-          {flag === Flag.ACTION_CONFIGURED && <>
-            <p>Keep an eye out at the status buttons at the bottom of the screen. They will indicate whether the workflow has been configured properly for each connection type.</p>
-          </>}
+          {flag === Flag.STATE_CONFIGURED && (
+            <>
+              <p>Actions are the steps that the WG team can take to move the migration journey of a partner or process forward. Outgoing actions from a stage are available for execution by the WG team for a partner or process at that stage.</p>
+              <p>Now that we have a couple of communication stages defined, we can connect them using actions. To do this, click on the action handle of a communication stage and drag it to the action handle of another communication stage.</p>
+            </>
+          )}
+          {flag === Flag.ACTION_CREATED && (
+            <>
+              <p>Great! We now have an action connecting two communication stages. Actions can be of several types:</p>
+              <ul>
+                <li>Simple action: This is a regular action that the WG team can execute to move the migration journey of a partner or process forward.</li>
+                <li>Email action: This is an action that sends an email to the partner or process. You can configure email template and reminder details for this action.</li>
+              </ul>
+              <p>
+                Actions can also be configured to be available only only for certain connection types. These are called <b>Action Constraints</b>. Constraints can be configured for:
+              </p>
+              <ul>
+                <li>AS2: Action is available only for partners or processes with an AS2 connection.</li>
+                <li>
+                  SFTP Internal: Action is available only for partners or processes with <b>PartnerLinQ</b>'s SFTP connection.
+                </li>
+                <li>
+                  SFTP External: Action is available only for partners or processes with <b>partner</b>'s SFTP connection.
+                </li>
+                <li>HTTP: Action is available only for partners or processes with an HTTP connection.</li>
+                <li>VAN: Action is available only for partners or processes with a VAN connection.</li>
+                <li>Webhook: Action is available only for partners or processes with a Webhook connection.</li>
+              </ul>
+            </>
+          )}
+          {flag === Flag.ACTION_CONFIGURED && (
+            <>
+              <p>Keep an eye out at the status buttons at the bottom of the screen. They will indicate whether the workflow has been configured properly for each connection type.</p>
+            </>
+          )}
         </div>
         <Background color="#f4f4f4" gap={25} variant={BackgroundVariant.Lines}></Background>
       </ReactFlow>
