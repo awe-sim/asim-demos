@@ -109,7 +109,9 @@ export const CustomEdge: React.FC<EdgeProps<Action>> = ({ id, sourceX, sourceY, 
                 </ListItemIcon>
               </Tooltip>
             )}
-            <ListItemText>{label}</ListItemText>
+            <Tooltip placement="top" arrow disableInteractive title={label}>
+              <ListItemText>{label}</ListItemText>
+            </Tooltip>
           </ListItem>
         </div>
       </EdgeLabelRenderer>

@@ -125,19 +125,34 @@ export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging,
 
   return (
     <>
-      <div className={classNames('custom-node', selected && 'selected', dragging && 'dragging', type, deadEndNodeIds.has(id) && 'dead-end')} tabIndex={-1} style={{ opacity: !shouldMakeTransparent ? 1 : 0.25 }}>
-        <div onDoubleClick={onContentDoubleClick} className="content">
-          <span className="label">{isEditing ? <input ref={ref} autoFocus value={newLabel} onChange={onInputChange} onKeyDown={onInputKeyDown} onBlur={onInputBlur} /> : label}</span>
-          {hasReminders && (
-            <Tooltip placement="top" arrow disableInteractive title="Reminders are set for this state.">
-              <IconButton size="small" color={reminderColor} style={{ paddingTop: 0, paddingBottom: 0 }}>
-                <AlarmOutlined fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
+      <Tooltip
+        placement="top"
+        arrow
+        disableInteractive
+        title={
+          deadEndNodeIds.has(id) ? (
+            <>
+              {label}
+              <p>Dead end stage! Process reaching this state will not be able to progress any further!</p>
+            </>
+          ) : (
+            label
+          )
+        }>
+        <div className={classNames('custom-node', selected && 'selected', dragging && 'dragging', type, deadEndNodeIds.has(id) && 'dead-end')} tabIndex={-1} style={{ opacity: !shouldMakeTransparent ? 1 : 0.25 }}>
+          <div onDoubleClick={onContentDoubleClick} className="content">
+            <span className="label">{isEditing ? <input ref={ref} autoFocus value={newLabel} onChange={onInputChange} onKeyDown={onInputKeyDown} onBlur={onInputBlur} /> : label}</span>
+            {hasReminders && (
+              <Tooltip placement="top" arrow disableInteractive title="Reminders are set for this state.">
+                <IconButton size="small" color={reminderColor} style={{ paddingTop: 0, paddingBottom: 0 }}>
+                  <AlarmOutlined fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </div>
+          {handles}
         </div>
-        {handles}
-      </div>
+      </Tooltip>
       <NodeToolbar onDoubleClick={prevent} position={Position.Top} offset={20} className={classNames('node-toolbar', selected && 'selected', dragging && 'dragging')}>
         <Stack direction="row" spacing={1}>
           <Tooltip placement="top" arrow disableInteractive title="Change this state to START. It is the first state in a workflow and can only have actions leading away from it.">
