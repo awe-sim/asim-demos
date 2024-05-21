@@ -29,25 +29,6 @@ enum AutoCompleteOptions {
   MIGRATION_COMPLETE = 'Migration complete',
 }
 
-const TYPE_MAP: Record<AutoCompleteOptions, Type> = {
-  [AutoCompleteOptions.START]: Type.START,
-  [AutoCompleteOptions.MIGRATION_LETTER_SENT]: Type.NORMAL,
-  [AutoCompleteOptions.CONNECTION_INFO_RECEIVED]: Type.AWAITING_REPLY,
-  [AutoCompleteOptions.CONNECTION_OK]: Type.NORMAL,
-  [AutoCompleteOptions.CONNECTION_FAILED]: Type.ERROR,
-  [AutoCompleteOptions.CONNECTION_TEST_DATE_PROPOSED]: Type.AWAITING_REPLY,
-  [AutoCompleteOptions.CONNECTION_TEST_DATE_CONFIRMED]: Type.NORMAL,
-  [AutoCompleteOptions.GOLIVE_T_14_LETTER_SENT]: Type.AWAITING_REPLY,
-  [AutoCompleteOptions.GOLIVE_T_14_LETTER_ACKNOWLEDGED]: Type.NORMAL,
-  [AutoCompleteOptions.GOLIVE_T_5_LETTER_SENT]: Type.AWAITING_REPLY,
-  [AutoCompleteOptions.GOLIVE_T_5_LETTER_ACKNOWLEDGED]: Type.NORMAL,
-  [AutoCompleteOptions.GOLIVE_T_1_LETTER_SENT]: Type.AWAITING_REPLY,
-  [AutoCompleteOptions.GOLIVE_T_1_LETTER_ACKNOWLEDGED]: Type.NORMAL,
-  [AutoCompleteOptions.GOLIVE]: Type.NORMAL,
-  [AutoCompleteOptions.LIVE_LOAD_REQUESTED]: Type.AWAITING_REPLY,
-  [AutoCompleteOptions.MIGRATION_COMPLETE]: Type.DONE,
-};
-
 const AUTOCOMPLETE_OPTIONS = [
   //
   AutoCompleteOptions.START,
@@ -67,6 +48,25 @@ const AUTOCOMPLETE_OPTIONS = [
   AutoCompleteOptions.LIVE_LOAD_REQUESTED,
   AutoCompleteOptions.MIGRATION_COMPLETE,
 ];
+
+const TYPE_MAP: Record<AutoCompleteOptions, Type> = {
+  [AutoCompleteOptions.START]: Type.START,
+  [AutoCompleteOptions.MIGRATION_LETTER_SENT]: Type.NORMAL,
+  [AutoCompleteOptions.CONNECTION_INFO_RECEIVED]: Type.AWAITING_REPLY,
+  [AutoCompleteOptions.CONNECTION_OK]: Type.NORMAL,
+  [AutoCompleteOptions.CONNECTION_FAILED]: Type.ERROR,
+  [AutoCompleteOptions.CONNECTION_TEST_DATE_PROPOSED]: Type.AWAITING_REPLY,
+  [AutoCompleteOptions.CONNECTION_TEST_DATE_CONFIRMED]: Type.NORMAL,
+  [AutoCompleteOptions.GOLIVE_T_14_LETTER_SENT]: Type.AWAITING_REPLY,
+  [AutoCompleteOptions.GOLIVE_T_14_LETTER_ACKNOWLEDGED]: Type.NORMAL,
+  [AutoCompleteOptions.GOLIVE_T_5_LETTER_SENT]: Type.AWAITING_REPLY,
+  [AutoCompleteOptions.GOLIVE_T_5_LETTER_ACKNOWLEDGED]: Type.NORMAL,
+  [AutoCompleteOptions.GOLIVE_T_1_LETTER_SENT]: Type.AWAITING_REPLY,
+  [AutoCompleteOptions.GOLIVE_T_1_LETTER_ACKNOWLEDGED]: Type.NORMAL,
+  [AutoCompleteOptions.GOLIVE]: Type.NORMAL,
+  [AutoCompleteOptions.LIVE_LOAD_REQUESTED]: Type.AWAITING_REPLY,
+  [AutoCompleteOptions.MIGRATION_COMPLETE]: Type.DONE,
+};
 
 export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging, data: { label, type, isEditing } }) => {
   //
@@ -193,33 +193,31 @@ export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging,
         <div className={classNames('custom-node', selected && 'selected', dragging && 'dragging', type, deadEndNodeIds.has(id) && 'dead-end')} tabIndex={-1} style={{ opacity: !shouldMakeTransparent ? 1 : 0.25 }}>
           <div onDoubleClick={onContentDoubleClick} className="content">
             {isEditing && (
-              <>
-                <Autocomplete //
-                  id="tags-standard"
-                  freeSolo
-                  disableClearable
-                  autoFocus
-                  autoSelect
-                  value={label}
-                  options={AUTOCOMPLETE_OPTIONS}
-                  onChange={onAutoCompleteChange}
-                  componentsProps={{ popper: { style: { width: 300 } } }}
-                  renderOption={(props, option, { selected }) => (
-                    <ListItem dense disablePadding disableGutters {...props} selected={selected}>
-                      {option}
-                    </ListItem>
-                  )}
-                  renderInput={params => (
-                    <TextField //
-                      {...params}
-                      autoFocus
-                      variant="standard"
-                      placeholder="Name"
-                      onBlur={onInputBlur}
-                    />
-                  )}
-                />
-              </>
+              <Autocomplete //
+                id="tags-standard"
+                freeSolo
+                disableClearable
+                autoFocus
+                autoSelect
+                value={label}
+                options={AUTOCOMPLETE_OPTIONS}
+                onChange={onAutoCompleteChange}
+                componentsProps={{ popper: { style: { width: 300 } } }}
+                renderOption={(props, option, { selected }) => (
+                  <ListItem dense disablePadding disableGutters {...props} selected={selected}>
+                    {option}
+                  </ListItem>
+                )}
+                renderInput={params => (
+                  <TextField //
+                    {...params}
+                    autoFocus
+                    variant="standard"
+                    placeholder="Name"
+                    onBlur={onInputBlur}
+                  />
+                )}
+              />
             )}
             {!isEditing && <span className="label">{label}</span>}
             {hasReminders && (

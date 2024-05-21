@@ -2,11 +2,123 @@ import { Edge, useEdges, XYPosition } from 'reactflow';
 import { Action, ProcessConnection, Variant } from './types';
 import { useRecoilValue } from 'recoil';
 import { selectedEdgeIdsState, selectedEdgeLabelCoordsState } from './states';
-import { ChangeEvent, useCallback, useMemo, useRef, useState } from 'react';
+import React, { ChangeEvent, SyntheticEvent, useCallback, useMemo, useRef, useState } from 'react';
 import { useReactFlowHooks } from './hooks';
 import { MailOutline, ExpandMore, ExpandLess, Clear, Mail, Upload, Lock, LockOpen, AlarmOnOutlined, AlarmOutlined } from '@mui/icons-material';
-import { Stack, TextField, Button, IconButton, InputAdornment, Chip, List, Popover, ListItemButton, Tooltip } from '@mui/material';
+import { Stack, TextField, Button, IconButton, InputAdornment, Chip, List, Popover, ListItemButton, Tooltip, Autocomplete, ListItem, AutocompleteValue, AutocompleteChangeReason, AutocompleteChangeDetails } from '@mui/material';
 import { prevent } from '../common/helpers';
+
+enum AutoCompleteOptions {
+  SEND_MIGRATION_LETTER = 'Send migration letter',
+  RECEIVE_CONNECTION_INFO = 'Receive connection info',
+  RECEIVE_ACKNOWLEDGEMENT = 'Receive acknowledgement',
+  SEND_ACKNOWLEDGEMENT = 'Send acknowledgement',
+  MARK_CONNECTION_OK = 'Mark connection OK',
+  MARK_CONNECTION_FAILED = 'Mark connection failed',
+  PROPOSE_CONNECTION_TEST_DATE = 'Propose connection test date',
+  SCHEDULE_CONNECTION_TEST = 'Schedule connection test',
+  REQUEST_ADDITIONAL_CONNECTION_INFO = 'Request additional connection info',
+  SEND_GOLIVE_T14_LETTER = 'Send GoLive T-14 letter',
+  SEND_GOLIVE_T5_LETTER = 'Send GoLive T-5 letter',
+  SEND_GOLIVE_T1_LETTER = 'Send GoLive T-1 letter',
+  MARK_GOLIVE = 'Mark GoLive',
+  REQUEST_LIVE_LOAD = 'Request live load',
+  COMPLETE_MIGRATION = 'Complete migration',
+}
+
+const AUTOCOMPLETE_OPTIONS: React.ReactNode[] = [
+  //
+  AutoCompleteOptions.SEND_MIGRATION_LETTER,
+  AutoCompleteOptions.RECEIVE_CONNECTION_INFO,
+  AutoCompleteOptions.RECEIVE_ACKNOWLEDGEMENT,
+  AutoCompleteOptions.SEND_ACKNOWLEDGEMENT,
+  AutoCompleteOptions.MARK_CONNECTION_OK,
+  AutoCompleteOptions.MARK_CONNECTION_FAILED,
+  AutoCompleteOptions.PROPOSE_CONNECTION_TEST_DATE,
+  AutoCompleteOptions.SCHEDULE_CONNECTION_TEST,
+  AutoCompleteOptions.REQUEST_ADDITIONAL_CONNECTION_INFO,
+  AutoCompleteOptions.SEND_GOLIVE_T14_LETTER,
+  AutoCompleteOptions.SEND_GOLIVE_T5_LETTER,
+  AutoCompleteOptions.SEND_GOLIVE_T1_LETTER,
+  AutoCompleteOptions.MARK_GOLIVE,
+  AutoCompleteOptions.REQUEST_LIVE_LOAD,
+  AutoCompleteOptions.COMPLETE_MIGRATION,
+];
+
+const ACTION_MAP: Record<AutoCompleteOptions, Action> = {
+  [AutoCompleteOptions.SEND_MIGRATION_LETTER]: {
+    isEmailAction: true,
+    variants: [
+      //
+      { label: 'AS2', emailTemplate: 'migration-letter-as2.html', hasReminder: true, reminderEmailTemplate: 'migration-letter-as2-reminder.html', constraintsConnectionsIn: [ProcessConnection.AS2], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
+      { label: 'HTTP', emailTemplate: 'migration-letter-http.html', hasReminder: true, reminderEmailTemplate: 'migration-letter-http-reminder.html', constraintsConnectionsIn: [ProcessConnection.HTTP], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
+      { label: 'SFTP External', emailTemplate: 'migration-letter-sftp-ext.html', hasReminder: true, reminderEmailTemplate: 'migration-letter-sftp-ext-reminder.html', constraintsConnectionsIn: [ProcessConnection.SFTP_EXTERNAL], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
+      { label: 'SFTP Internal', emailTemplate: 'migration-letter-sftp-int.html', hasReminder: true, reminderEmailTemplate: 'migration-letter-sftp-int-reminder.html', constraintsConnectionsIn: [ProcessConnection.SFTP_INTERNAL], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
+      { label: 'VAN', emailTemplate: 'migration-letter-van.html', hasReminder: true, reminderEmailTemplate: 'migration-letter-van-reminder.html', constraintsConnectionsIn: [ProcessConnection.VAN], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
+      { label: 'Web Hook', emailTemplate: 'migration-letter-webhook.html', hasReminder: true, reminderEmailTemplate: 'migration-letter-webhook-reminder.html', constraintsConnectionsIn: [ProcessConnection.WEBHOOK], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
+    ],
+  },
+  [AutoCompleteOptions.RECEIVE_CONNECTION_INFO]: {
+    isEmailAction: false,
+    variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [ProcessConnection.AS2, ProcessConnection.HTTP, ProcessConnection.SFTP_EXTERNAL], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+  },
+  [AutoCompleteOptions.RECEIVE_ACKNOWLEDGEMENT]: {
+    isEmailAction: false,
+    variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [ProcessConnection.SFTP_INTERNAL, ProcessConnection.VAN, ProcessConnection.WEBHOOK], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+  },
+  [AutoCompleteOptions.SEND_ACKNOWLEDGEMENT]: {
+    isEmailAction: true,
+    variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+  },
+  [AutoCompleteOptions.MARK_CONNECTION_OK]: {
+    isEmailAction: false,
+    variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+  },
+  [AutoCompleteOptions.MARK_CONNECTION_FAILED]: {
+    isEmailAction: false,
+    variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+  },
+  [AutoCompleteOptions.PROPOSE_CONNECTION_TEST_DATE]: {
+    isEmailAction: true,
+    variants: [{ label: '', emailTemplate: 'connection-test-date.html', hasReminder: true, reminderEmailTemplate: 'connection-test-date-reminder.html', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+  },
+  [AutoCompleteOptions.SCHEDULE_CONNECTION_TEST]: {
+    isEmailAction: false,
+    variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+  },
+  [AutoCompleteOptions.REQUEST_ADDITIONAL_CONNECTION_INFO]: {
+    isEmailAction: true,
+    variants: [
+      { label: 'AS2', emailTemplate: 'additional-connection-info-as2.html', hasReminder: true, reminderEmailTemplate: 'additional-connection-info-as2-reminder.html', constraintsConnectionsIn: [ProcessConnection.AS2], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
+      { label: 'HTTP', emailTemplate: 'additional-connection-info-http.html', hasReminder: true, reminderEmailTemplate: 'additional-connection-info-http-reminder.html', constraintsConnectionsIn: [ProcessConnection.HTTP], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
+      { label: 'SFTP External', emailTemplate: 'additional-connection-info-sftp-ext.html', hasReminder: true, reminderEmailTemplate: 'additional-connection-info-sftp-ext-reminder.html', constraintsConnectionsIn: [ProcessConnection.SFTP_EXTERNAL], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
+    ],
+  },
+  [AutoCompleteOptions.SEND_GOLIVE_T14_LETTER]: {
+    isEmailAction: true,
+    variants: [{ label: '', emailTemplate: 'golive-t14-letter.html', hasReminder: true, reminderEmailTemplate: 'golive-t14-letter-reminder.html', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+  },
+  [AutoCompleteOptions.SEND_GOLIVE_T5_LETTER]: {
+    isEmailAction: true,
+    variants: [{ label: '', emailTemplate: 'golive-t5-letter.html', hasReminder: true, reminderEmailTemplate: 'golive-t5-letter-reminder.html', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+  },
+  [AutoCompleteOptions.SEND_GOLIVE_T1_LETTER]: {
+    isEmailAction: true,
+    variants: [{ label: '', emailTemplate: 'golive-t1-letter.html', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+  },
+  [AutoCompleteOptions.MARK_GOLIVE]: {
+    isEmailAction: true,
+    variants: [{ label: '', emailTemplate: 'golive.html', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+  },
+  [AutoCompleteOptions.REQUEST_LIVE_LOAD]: {
+    isEmailAction: true,
+    variants: [{ label: '', emailTemplate: 'live-load.html', hasReminder: true, reminderEmailTemplate: 'live-load-reminder.html', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+  },
+  [AutoCompleteOptions.COMPLETE_MIGRATION]: {
+    isEmailAction: false,
+    variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+  },
+};
 
 export const CustomEdgeToolbarPlaceholderComponent: React.FC = () => {
   const edges = useEdges<Action>();
@@ -26,15 +138,6 @@ type CustomEdgeToolbarProps = {
 };
 const CustomEdgeToolbarComponent: React.FC<CustomEdgeToolbarProps> = ({ edge, edgeLabelCoords }) => {
   const { updateEdge } = useReactFlowHooks();
-
-  const setName = useCallback<React.ChangeEventHandler<HTMLInputElement>>(
-    ev => {
-      updateEdge(edge.id, draft => {
-        draft.label = ev.target.value;
-      });
-    },
-    [edge.id, updateEdge],
-  );
 
   const toggleEmailAction = useCallback(() => {
     updateEdge(edge.id, draft => {
@@ -89,12 +192,62 @@ const CustomEdgeToolbarComponent: React.FC<CustomEdgeToolbarProps> = ({ edge, ed
 
   const [expanded, setExpanded] = useState(false);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const onAutoCompleteChange = useCallback(
+    async (_ev: SyntheticEvent, value: AutocompleteValue<React.ReactNode, false, true, true>, reason: AutocompleteChangeReason, details?: AutocompleteChangeDetails<React.ReactNode>) => {
+      console.log(value, reason, details);
+      // const actionTemplate = ACTION_MAP[value as AutoCompleteOptions];
+      // if (actionTemplate && edge.data?.variants.length !== 1) {
+      //   if (reason !== 'selectOption') return;
+      //   const result = await showMessageBox({
+      //     title: value.toString(),
+      //     message: 'You have selected a predefined action. This will overwrite the current action and its variants. Do you want to proceed?',
+      //     buttons: [
+      //       { value: true, text: 'Yes' },
+      //       { value: false, text: 'No' },
+      //     ],
+      //   });
+      //   if (!result) return;
+      // }
+      updateEdge(edge.id, draft => {
+        draft.label = value;
+        draft.data = ACTION_MAP[value as AutoCompleteOptions] ?? draft.data;
+      });
+    },
+    [edge.id, updateEdge],
+  );
+
   return (
     <div onDoubleClick={prevent} className="edge-toolbar-v2" style={{ left: edgeLabelCoords?.x, top: edgeLabelCoords?.y }}>
       <Stack direction="column" spacing={1}>
         <Stack direction="row" spacing={1}>
           <ToggleButtonComponent iconOn={<MailOutline color="error" />} iconOff={<MailOutline />} value={edge.data?.isEmailAction ?? false} onToggle={toggleEmailAction} tooltip={edge.data?.isEmailAction ?? false ? 'Click to revert to a simple action' : 'Click to convert to an email action'} />
-          <TextField label="Action Name" size="small" variant="standard" value={edge.label} onChange={setName} style={{ width: '200px' }} inputProps={{ style: { height: '26px' } }} />
+          <Autocomplete //
+            id="tags-standard"
+            freeSolo
+            disableClearable
+            autoFocus
+            autoSelect
+            value={edge.label ?? ''}
+            options={AUTOCOMPLETE_OPTIONS}
+            onChange={onAutoCompleteChange}
+            componentsProps={{ popper: { style: { width: 300 } } }}
+            renderOption={(props, option, { selected }) => (
+              <ListItem dense disablePadding disableGutters {...props} selected={selected}>
+                {option}
+              </ListItem>
+            )}
+            renderInput={params => (
+              <TextField //
+                {...params}
+                autoFocus
+                variant="standard"
+                placeholder="Name"
+                fullWidth
+                style={{ width: '200px' }}
+              />
+            )}
+          />
           {edge.data && edge.data.variants.length === 1 && (
             <VariantComponent //
               edgeId={edge.id}
