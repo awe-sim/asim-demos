@@ -28,7 +28,12 @@ input {
 }
 
 .node-toolbar {
+  opacity: 0.6;
   transition: opacity 0.15s ease-in;
+
+  &:hover {
+    opacity: 1;
+  }
 
   &.selected {
     .MuiStack-root {
@@ -89,10 +94,6 @@ input {
         padding: 0;
       }
     }
-  }
-
-  &.dragging {
-    opacity: 0.5;
   }
 }
 
@@ -257,7 +258,6 @@ input {
 }
 
 .edge-label {
-  // background-color: rgba(255, 255, 255, 0.75);
   font-size: 10px;
   padding: 5px 10px;
   pointer-events: all;
@@ -283,17 +283,6 @@ input {
   }
 }
 
-.edge-toolbar {
-  background-color: rgb(255, 255, 255, 0.85);
-  border-radius: 4px;
-  box-shadow: 0 0 5px #c0c0c0;
-  padding: 10px;
-  font-size: 10px;
-  pointer-events: all;
-  position: absolute;
-  top: -25px;
-}
-
 .MuiAutocomplete-popper {
   .MuiPaper-root {
     margin-top: 15px;
@@ -301,15 +290,29 @@ input {
   }
 }
 
-.edge-toolbar-v2 {
+.edge-toolbar {
   border: 1px solid #c0c0c0;
   border-radius: 6px;
   padding: 5px;
-  background-color: white;
+  background-color: #ffffff;
+  box-shadow: 0 0 10px #808080;
+  opacity: 0.6;
+  transition: opacity 0.15s ease-in;
+
+  &:hover {
+    opacity: 1;
+  }
 
   table {
-    // border: 1px solid red;
     border-spacing: 0;
+
+    tr.action-variant:nth-child(2) {
+      td {
+        border-top: 1px solid #c0c0c0;
+        padding-top: 5px;
+        margin-top: 10px;
+      }
+    }
 
     td {
       padding: 0;
@@ -323,6 +326,10 @@ input {
           padding: 0;
         }
       }
+    }
+
+    .index {
+      text-align: center;
     }
 
     .label {
@@ -355,7 +362,7 @@ input {
         border-left: 1px solid #e0e0e0;
         padding-left: 10px;
         padding-right: 10px;
-        
+
         .MuiIconButton-root {
           padding: 0;
         }
@@ -395,194 +402,22 @@ input {
       }
     }
 
-    .action-variants-count {}
-
     .action-add-variant {
       &>div {
-        // padding: 10px;
-        // padding-right: 0;
-        // padding-left: 0;
 
         &>div {
           padding-left: 10px;
           padding-right: 10px;
           border-left: 1px solid #e0e0e0;
+
           .MuiButton-root {
-            // padding: 0;
-            // padding-left: 10px;
             min-width: 150px;
             max-width: 150px;
             height: 30px;
-            // border-left: 1px solid #808080;
-            // padding-left: 10px;
           }
         }
       }
     }
-
-    .end-icon-button {}
-
-    .action-header {
-      .start-icon-button {}
-
-      .label {}
-
-      .variant-email {}
-
-      .variant-has-reminder {}
-
-      .variant-reminder-email {}
-
-      .variant-has-constraints {}
-
-      .variant-constraints {}
-
-      .action-variants-count {}
-
-      .action-add-variant {}
-
-      .end-icon-button {}
-    }
-
-    .action-variant {
-      .start-icon-button {}
-
-      .label {}
-
-      .variant-email {}
-
-      .variant-has-reminder {}
-
-      .variant-reminder-email {}
-
-      .variant-has-constraints {}
-
-      .variant-constraints {}
-
-      .action-variants-count {}
-
-      .action-add-variant {}
-
-      .end-icon-button {}
-    }
-  }
-
-  &>.MuiStack-root {
-    background-color: rgb(255, 255, 255, 0.85);
-    border-radius: 4px;
-    box-shadow: 0 0 5px #c0c0c0;
-    padding: 10px;
-
-    &>.MuiStack-root {
-      display: flex;
-
-      .icon-button {
-        min-width: 34px;
-        max-width: 34px;
-      }
-
-      .spacer {
-        flex-grow: 1;
-      }
-
-      &.header {
-        .label {
-          margin-top: auto;
-          margin-bottom: auto;
-          min-width: 200px;
-          max-width: 200px;
-        }
-
-        .constraints {
-          display: flex;
-          border-left: 1px solid #c0c0c0;
-
-          .chips {
-            margin-top: auto;
-            margin-bottom: auto;
-            min-width: 200px;
-            max-width: 300px;
-
-            .MuiChip-root {
-              margin: 1px;
-              border-radius: 6px;
-            }
-          }
-        }
-
-        .variant-button {
-          min-width: 111px;
-          max-width: 111px;
-        }
-
-        &.with-email {
-          .icon {}
-
-          .label {}
-
-          .email-template {}
-
-          .reminder-template {}
-
-          .constraints {}
-
-          .variant-button {}
-        }
-
-        &.with-variants {
-          .icon {}
-
-          .label {}
-
-          .variants-count {}
-
-          .variant-button {}
-
-          .expand-collapse {}
-        }
-      }
-
-      &.variant {
-        .variant-name {
-          margin-left: 42px;
-          margin-top: auto;
-          margin-bottom: auto;
-          min-width: 200px;
-          max-width: 200px;
-        }
-
-        .email-template {}
-
-        .reminder-template {}
-
-        .constraints {
-          display: flex;
-          border-left: 1px solid #c0c0c0;
-
-          .chips {
-            margin-top: auto;
-            margin-bottom: auto;
-            min-width: 200px;
-            max-width: 300px;
-
-            .MuiChip-root {
-              margin: 1px;
-              border-radius: 6px;
-            }
-          }
-        }
-
-        .close-button {}
-      }
-    }
-
-    // .MuiButton-root {
-    //   border-width: 0.75px;
-    //   font-size: 10px;
-    //   height: 24px;
-    //   text-transform: none;
-    //   width: 90px;
-    // }
   }
 
   position: absolute;
@@ -591,7 +426,7 @@ input {
 }
 
 .MuiTooltip-tooltip {
-  font-size: 14px !important;
-  background-color: #404040e0 !important;
+  font-size: 13px !important;
+  background-color: #00000080 !important;
   z-index: 1000 !important;
 }

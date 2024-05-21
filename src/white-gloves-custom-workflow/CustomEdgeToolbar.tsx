@@ -1,10 +1,12 @@
-import { Edge, XYPosition } from 'reactflow';
-import { Action, ProcessConnection, Variant } from './types';
-import React, { ChangeEvent, SyntheticEvent, useCallback, useRef, useState } from 'react';
-import { useReactFlowHooks } from './hooks';
-import { MailOutline, ExpandMore, ExpandLess, Clear, Mail, Upload, Lock, LockOpen, AlarmOnOutlined, AlarmOutlined } from '@mui/icons-material';
-import { TextField, Button, IconButton, InputAdornment, Chip, List, Popover, ListItemButton, Tooltip, Autocomplete, ListItem, AutocompleteValue } from '@mui/material';
+import { AlarmOnOutlined, AlarmOutlined, Clear, ExpandLess, ExpandMore, Lock, LockOpen, Mail, MailOutline, Upload } from '@mui/icons-material';
+import { Autocomplete, AutocompleteValue, Button, Chip, IconButton, InputAdornment, List, ListItem, ListItemButton, Popover, TextField, Tooltip } from '@mui/material';
+import React, { ChangeEvent, SyntheticEvent, useCallback, useMemo, useRef, useState } from 'react';
+import { Edge, useEdges, XYPosition } from 'reactflow';
+import { useRecoilValue } from 'recoil';
 import { prevent } from '../common/helpers';
+import { useReactFlowHooks } from './hooks';
+import { selectedEdgeIdsState, selectedEdgeLabelCoordsState } from './states';
+import { Action, ProcessConnection, Variant } from './types';
 
 enum AutoCompleteOptions {
   SEND_MIGRATION_LETTER = 'Send migration letter',
@@ -120,15 +122,25 @@ const ACTION_MAP: Record<AutoCompleteOptions, Action> = {
 
 // ------------------------------------------------------------------------------------------------
 
+export const CustomEdgeToolbarPlaceholderComponent: React.FC = () => {
+  const edges = useEdges<Action>();
+  const id = useRecoilValue(selectedEdgeIdsState)?.[0];
+  const edgeLabelCoords = useRecoilValue(selectedEdgeLabelCoordsState);
+  const edge = useMemo(() => edges.find(e => e.id === id), [edges, id]);
+
+  if (!edge || !edgeLabelCoords) return null;
+  return <CustomEdgeToolbarComponent edge={edge} edgeLabelCoords={edgeLabelCoords} />;
+};
+
 type CustomEdgeToolbarProps = {
   edge: Edge<Action>;
   edgeLabelCoords: XYPosition;
 };
-export const CustomEdgeToolbarComponent: React.FC<CustomEdgeToolbarProps> = ({ edge, edgeLabelCoords }) => {
+const CustomEdgeToolbarComponent: React.FC<CustomEdgeToolbarProps> = ({ edge, edgeLabelCoords }) => {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div onDoubleClick={prevent} className="edge-toolbar-v2" style={{ left: edgeLabelCoords?.x, top: edgeLabelCoords?.y }}>
+    <div onDoubleClick={prevent} className="edge-toolbar" style={{ left: edgeLabelCoords?.x, top: edgeLabelCoords?.y }}>
       <table>
         <tr className="action-header">
           <td className="start-icon-button">{true && <ActionToggleEmailComponent id={edge.id} edge={edge} />}</td>
@@ -144,7 +156,9 @@ export const CustomEdgeToolbarComponent: React.FC<CustomEdgeToolbarProps> = ({ e
         {expanded &&
           edge.data?.variants.map((variant, index) => (
             <tr key={index} className="action-variant">
-              <td className="start-icon-button"></td>
+              <td className="index">
+                <div>{index + 1}</div>
+              </td>
               <td className="label">{true && <VariantNameComponent id={edge.id} index={index} variant={variant} />}</td>
               <td className="variant-email">{edge.data?.isEmailAction && <VariantEmailComponent id={edge.id} index={index} variant={variant} />}</td>
               <td className="variant-has-reminder">{edge.data?.isEmailAction && <VariantToggleReminderComponent id={edge.id} index={index} variant={variant} />}</td>
