@@ -42,6 +42,7 @@ export type Variant = {
   emailTemplate: string;
   hasReminder: boolean;
   reminderEmailTemplate: string;
+  hasConstraints: boolean;
   constraintsConnectionsIn: ProcessConnection[];
   constraintsConnectionsNotIn: ProcessConnection[];
   constraintsOriginsIn: ProcessOrigin[];

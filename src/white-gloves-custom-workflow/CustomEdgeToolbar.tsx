@@ -1,11 +1,9 @@
-import { Edge, useEdges, XYPosition } from 'reactflow';
+import { Edge, XYPosition } from 'reactflow';
 import { Action, ProcessConnection, Variant } from './types';
-import { useRecoilValue } from 'recoil';
-import { selectedEdgeIdsState, selectedEdgeLabelCoordsState } from './states';
-import React, { ChangeEvent, SyntheticEvent, useCallback, useMemo, useRef, useState } from 'react';
+import React, { ChangeEvent, SyntheticEvent, useCallback, useRef, useState } from 'react';
 import { useReactFlowHooks } from './hooks';
 import { MailOutline, ExpandMore, ExpandLess, Clear, Mail, Upload, Lock, LockOpen, AlarmOnOutlined, AlarmOutlined } from '@mui/icons-material';
-import { Stack, TextField, Button, IconButton, InputAdornment, Chip, List, Popover, ListItemButton, Tooltip, Autocomplete, ListItem, AutocompleteValue, AutocompleteChangeReason, AutocompleteChangeDetails } from '@mui/material';
+import { TextField, Button, IconButton, InputAdornment, Chip, List, Popover, ListItemButton, Tooltip, Autocomplete, ListItem, AutocompleteValue } from '@mui/material';
 import { prevent } from '../common/helpers';
 
 enum AutoCompleteOptions {
@@ -50,84 +48,74 @@ const ACTION_MAP: Record<AutoCompleteOptions, Action> = {
     isEmailAction: true,
     variants: [
       //
-      { label: 'AS2', emailTemplate: 'migration-letter-as2.html', hasReminder: true, reminderEmailTemplate: 'migration-letter-as2-reminder.html', constraintsConnectionsIn: [ProcessConnection.AS2], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
-      { label: 'HTTP', emailTemplate: 'migration-letter-http.html', hasReminder: true, reminderEmailTemplate: 'migration-letter-http-reminder.html', constraintsConnectionsIn: [ProcessConnection.HTTP], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
-      { label: 'SFTP External', emailTemplate: 'migration-letter-sftp-ext.html', hasReminder: true, reminderEmailTemplate: 'migration-letter-sftp-ext-reminder.html', constraintsConnectionsIn: [ProcessConnection.SFTP_EXTERNAL], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
-      { label: 'SFTP Internal', emailTemplate: 'migration-letter-sftp-int.html', hasReminder: true, reminderEmailTemplate: 'migration-letter-sftp-int-reminder.html', constraintsConnectionsIn: [ProcessConnection.SFTP_INTERNAL], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
-      { label: 'VAN', emailTemplate: 'migration-letter-van.html', hasReminder: true, reminderEmailTemplate: 'migration-letter-van-reminder.html', constraintsConnectionsIn: [ProcessConnection.VAN], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
-      { label: 'Web Hook', emailTemplate: 'migration-letter-webhook.html', hasReminder: true, reminderEmailTemplate: 'migration-letter-webhook-reminder.html', constraintsConnectionsIn: [ProcessConnection.WEBHOOK], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
+      { label: 'AS2', emailTemplate: 'migration-letter-as2.html', hasReminder: true, reminderEmailTemplate: 'migration-letter-as2-reminder.html', hasConstraints: true, constraintsConnectionsIn: [ProcessConnection.AS2], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
+      { label: 'HTTP', emailTemplate: 'migration-letter-http.html', hasReminder: true, reminderEmailTemplate: 'migration-letter-http-reminder.html', hasConstraints: true, constraintsConnectionsIn: [ProcessConnection.HTTP], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
+      { label: 'SFTP External', emailTemplate: 'migration-letter-sftp-ext.html', hasReminder: true, reminderEmailTemplate: 'migration-letter-sftp-ext-reminder.html', hasConstraints: true, constraintsConnectionsIn: [ProcessConnection.SFTP_EXTERNAL], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
+      { label: 'SFTP Internal', emailTemplate: 'migration-letter-sftp-int.html', hasReminder: true, reminderEmailTemplate: 'migration-letter-sftp-int-reminder.html', hasConstraints: true, constraintsConnectionsIn: [ProcessConnection.SFTP_INTERNAL], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
+      { label: 'VAN', emailTemplate: 'migration-letter-van.html', hasReminder: true, reminderEmailTemplate: 'migration-letter-van-reminder.html', hasConstraints: true, constraintsConnectionsIn: [ProcessConnection.VAN], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
+      { label: 'Web Hook', emailTemplate: 'migration-letter-webhook.html', hasReminder: true, reminderEmailTemplate: 'migration-letter-webhook-reminder.html', hasConstraints: true, constraintsConnectionsIn: [ProcessConnection.WEBHOOK], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
     ],
   },
   [AutoCompleteOptions.RECEIVE_CONNECTION_INFO]: {
     isEmailAction: false,
-    variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [ProcessConnection.AS2, ProcessConnection.HTTP, ProcessConnection.SFTP_EXTERNAL], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+    variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', hasConstraints: true, constraintsConnectionsIn: [ProcessConnection.AS2, ProcessConnection.HTTP, ProcessConnection.SFTP_EXTERNAL], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
   },
   [AutoCompleteOptions.RECEIVE_ACKNOWLEDGEMENT]: {
     isEmailAction: false,
-    variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [ProcessConnection.SFTP_INTERNAL, ProcessConnection.VAN, ProcessConnection.WEBHOOK], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+    variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', hasConstraints: true, constraintsConnectionsIn: [ProcessConnection.SFTP_INTERNAL, ProcessConnection.VAN, ProcessConnection.WEBHOOK], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
   },
   [AutoCompleteOptions.SEND_ACKNOWLEDGEMENT]: {
     isEmailAction: true,
-    variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+    variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', hasConstraints: false, constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
   },
   [AutoCompleteOptions.MARK_CONNECTION_OK]: {
     isEmailAction: false,
-    variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+    variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', hasConstraints: false, constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
   },
   [AutoCompleteOptions.MARK_CONNECTION_FAILED]: {
     isEmailAction: false,
-    variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+    variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', hasConstraints: false, constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
   },
   [AutoCompleteOptions.PROPOSE_CONNECTION_TEST_DATE]: {
     isEmailAction: true,
-    variants: [{ label: '', emailTemplate: 'connection-test-date.html', hasReminder: true, reminderEmailTemplate: 'connection-test-date-reminder.html', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+    variants: [{ label: '', emailTemplate: 'connection-test-date.html', hasReminder: true, reminderEmailTemplate: 'connection-test-date-reminder.html', hasConstraints: false, constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
   },
   [AutoCompleteOptions.SCHEDULE_CONNECTION_TEST]: {
     isEmailAction: false,
-    variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+    variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', hasConstraints: false, constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
   },
   [AutoCompleteOptions.REQUEST_ADDITIONAL_CONNECTION_INFO]: {
     isEmailAction: true,
     variants: [
-      { label: 'AS2', emailTemplate: 'additional-connection-info-as2.html', hasReminder: true, reminderEmailTemplate: 'additional-connection-info-as2-reminder.html', constraintsConnectionsIn: [ProcessConnection.AS2], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
-      { label: 'HTTP', emailTemplate: 'additional-connection-info-http.html', hasReminder: true, reminderEmailTemplate: 'additional-connection-info-http-reminder.html', constraintsConnectionsIn: [ProcessConnection.HTTP], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
-      { label: 'SFTP External', emailTemplate: 'additional-connection-info-sftp-ext.html', hasReminder: true, reminderEmailTemplate: 'additional-connection-info-sftp-ext-reminder.html', constraintsConnectionsIn: [ProcessConnection.SFTP_EXTERNAL], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
+      { label: 'AS2', emailTemplate: 'additional-connection-info-as2.html', hasReminder: true, reminderEmailTemplate: 'additional-connection-info-as2-reminder.html', hasConstraints: true, constraintsConnectionsIn: [ProcessConnection.AS2], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
+      { label: 'HTTP', emailTemplate: 'additional-connection-info-http.html', hasReminder: true, reminderEmailTemplate: 'additional-connection-info-http-reminder.html', hasConstraints: true, constraintsConnectionsIn: [ProcessConnection.HTTP], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
+      { label: 'SFTP External', emailTemplate: 'additional-connection-info-sftp-ext.html', hasReminder: true, reminderEmailTemplate: 'additional-connection-info-sftp-ext-reminder.html', hasConstraints: true, constraintsConnectionsIn: [ProcessConnection.SFTP_EXTERNAL], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] },
     ],
   },
   [AutoCompleteOptions.SEND_GOLIVE_T14_LETTER]: {
     isEmailAction: true,
-    variants: [{ label: '', emailTemplate: 'golive-t14-letter.html', hasReminder: true, reminderEmailTemplate: 'golive-t14-letter-reminder.html', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+    variants: [{ label: '', emailTemplate: 'golive-t14-letter.html', hasReminder: true, reminderEmailTemplate: 'golive-t14-letter-reminder.html', hasConstraints: false, constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
   },
   [AutoCompleteOptions.SEND_GOLIVE_T5_LETTER]: {
     isEmailAction: true,
-    variants: [{ label: '', emailTemplate: 'golive-t5-letter.html', hasReminder: true, reminderEmailTemplate: 'golive-t5-letter-reminder.html', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+    variants: [{ label: '', emailTemplate: 'golive-t5-letter.html', hasReminder: true, reminderEmailTemplate: 'golive-t5-letter-reminder.html', hasConstraints: false, constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
   },
   [AutoCompleteOptions.SEND_GOLIVE_T1_LETTER]: {
     isEmailAction: true,
-    variants: [{ label: '', emailTemplate: 'golive-t1-letter.html', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+    variants: [{ label: '', emailTemplate: 'golive-t1-letter.html', hasReminder: false, reminderEmailTemplate: '', hasConstraints: false, constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
   },
   [AutoCompleteOptions.MARK_GOLIVE]: {
     isEmailAction: true,
-    variants: [{ label: '', emailTemplate: 'golive.html', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+    variants: [{ label: '', emailTemplate: 'golive.html', hasReminder: false, reminderEmailTemplate: '', hasConstraints: false, constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
   },
   [AutoCompleteOptions.REQUEST_LIVE_LOAD]: {
     isEmailAction: true,
-    variants: [{ label: '', emailTemplate: 'live-load.html', hasReminder: true, reminderEmailTemplate: 'live-load-reminder.html', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+    variants: [{ label: '', emailTemplate: 'live-load.html', hasReminder: true, reminderEmailTemplate: 'live-load-reminder.html', hasConstraints: false, constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
   },
   [AutoCompleteOptions.COMPLETE_MIGRATION]: {
     isEmailAction: false,
-    variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
+    variants: [{ label: '', emailTemplate: '', hasReminder: false, reminderEmailTemplate: '', hasConstraints: false, constraintsConnectionsIn: [], constraintsConnectionsNotIn: [], constraintsOriginsIn: [], constraintsOriginsNotIn: [], constraintsDirectionsIn: [], constraintsDirectionsNotIn: [], constraintsStatesIn: [], constraintsStatesNotIn: [] }],
   },
-};
-
-export const CustomEdgeToolbarPlaceholderComponent: React.FC = () => {
-  const edges = useEdges<Action>();
-  const id = useRecoilValue(selectedEdgeIdsState)?.[0];
-  const edgeLabelCoords = useRecoilValue(selectedEdgeLabelCoordsState);
-  const edge = useMemo(() => edges.find(e => e.id === id), [edges, id]);
-
-  if (!edge || !edgeLabelCoords) return null;
-  return <CustomEdgeToolbarComponent edge={edge} edgeLabelCoords={edgeLabelCoords} />;
 };
 
 // ------------------------------------------------------------------------------------------------
@@ -136,168 +124,49 @@ type CustomEdgeToolbarProps = {
   edge: Edge<Action>;
   edgeLabelCoords: XYPosition;
 };
-const CustomEdgeToolbarComponent: React.FC<CustomEdgeToolbarProps> = ({ edge, edgeLabelCoords }) => {
-  const { updateEdge } = useReactFlowHooks();
-
-  const toggleEmailAction = useCallback(() => {
-    updateEdge(edge.id, draft => {
-      draft.data = draft.data ?? {
-        isEmailAction: false,
-        variants: [],
-      };
-      if (draft.data.isEmailAction) {
-        draft.data.isEmailAction = false;
-        draft.data.variants = draft.data.variants.slice(0, 1);
-      } else {
-        draft.data.isEmailAction = true;
-      }
-    });
-  }, [edge.id, updateEdge]);
-
-  const addVariant = useCallback(() => {
-    updateEdge(edge.id, draft => {
-      draft.data = draft.data ?? {
-        isEmailAction: false,
-        variants: [],
-      };
-      draft.data.variants.push({
-        label: ``,
-        emailTemplate: '',
-        hasReminder: false,
-        reminderEmailTemplate: '',
-        constraintsConnectionsIn: [],
-        constraintsConnectionsNotIn: [],
-        constraintsOriginsIn: [],
-        constraintsOriginsNotIn: [],
-        constraintsDirectionsIn: [],
-        constraintsDirectionsNotIn: [],
-        constraintsStatesIn: [],
-        constraintsStatesNotIn: [],
-      });
-    });
-  }, [updateEdge, edge.id]);
-
-  const removeVariant = useCallback(
-    (index: number) => {
-      updateEdge(edge.id, draft => {
-        draft.data = draft.data ?? {
-          isEmailAction: false,
-          variants: [],
-        };
-        draft.data.variants.splice(index, 1);
-      });
-    },
-    [edge.id, updateEdge],
-  );
-
+export const CustomEdgeToolbarComponent: React.FC<CustomEdgeToolbarProps> = ({ edge, edgeLabelCoords }) => {
   const [expanded, setExpanded] = useState(false);
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const onAutoCompleteChange = useCallback(
-    async (_ev: SyntheticEvent, value: AutocompleteValue<React.ReactNode, false, true, true>, reason: AutocompleteChangeReason, details?: AutocompleteChangeDetails<React.ReactNode>) => {
-      console.log(value, reason, details);
-      // const actionTemplate = ACTION_MAP[value as AutoCompleteOptions];
-      // if (actionTemplate && edge.data?.variants.length !== 1) {
-      //   if (reason !== 'selectOption') return;
-      //   const result = await showMessageBox({
-      //     title: value.toString(),
-      //     message: 'You have selected a predefined action. This will overwrite the current action and its variants. Do you want to proceed?',
-      //     buttons: [
-      //       { value: true, text: 'Yes' },
-      //       { value: false, text: 'No' },
-      //     ],
-      //   });
-      //   if (!result) return;
-      // }
-      updateEdge(edge.id, draft => {
-        draft.label = value;
-        draft.data = ACTION_MAP[value as AutoCompleteOptions] ?? draft.data;
-      });
-    },
-    [edge.id, updateEdge],
-  );
 
   return (
     <div onDoubleClick={prevent} className="edge-toolbar-v2" style={{ left: edgeLabelCoords?.x, top: edgeLabelCoords?.y }}>
-      <Stack direction="column" spacing={1}>
-        <Stack direction="row" spacing={1}>
-          <ToggleButtonComponent iconOn={<MailOutline color="error" />} iconOff={<MailOutline />} value={edge.data?.isEmailAction ?? false} onToggle={toggleEmailAction} tooltip={edge.data?.isEmailAction ?? false ? 'Click to revert to a simple action' : 'Click to convert to an email action'} />
-          <Autocomplete //
-            id="tags-standard"
-            freeSolo
-            disableClearable
-            autoFocus
-            autoSelect
-            value={edge.label ?? ''}
-            options={AUTOCOMPLETE_OPTIONS}
-            onChange={onAutoCompleteChange}
-            componentsProps={{ popper: { style: { width: 300 } } }}
-            renderOption={(props, option, { selected }) => (
-              <ListItem dense disablePadding disableGutters {...props} selected={selected}>
-                {option}
-              </ListItem>
-            )}
-            renderInput={params => (
-              <TextField //
-                {...params}
-                autoFocus
-                variant="standard"
-                placeholder="Name"
-                fullWidth
-                style={{ width: '200px' }}
-              />
-            )}
-          />
-          {edge.data && edge.data.variants.length === 1 && (
-            <VariantComponent //
-              edgeId={edge.id}
-              index={0}
-              variant={edge.data.variants[0]}
-              showName={false}
-              showTemplates={edge.data.isEmailAction}
-              showRemove={false}
-              remove={() => removeVariant(0)}
-            />
-          )}
-          {edge.data && edge.data.variants.length > 1 && <div style={{ marginTop: 'auto', marginBottom: 'auto' }}>{edge.data.variants.length} Variants</div>}
-          <div style={{ marginTop: 'auto', marginBottom: 'auto' }}>
-            <Tooltip placement="top" arrow disableInteractive title="Add a new variant">
-              <Button size="small" variant="outlined" onClick={addVariant}>
-                Add Variant
-              </Button>
-            </Tooltip>
-          </div>
-          {edge.data && edge.data.variants.length > 1 && (
-            <IconButton size="small" onClick={() => setExpanded(!expanded)}>
-              {expanded ? (
-                <Tooltip placement="top" arrow disableInteractive title="Hide variants">
-                  <ExpandMore />
-                </Tooltip>
-              ) : (
-                <Tooltip placement="top" arrow disableInteractive title="Show variants">
-                  <ExpandLess />
-                </Tooltip>
-              )}
-            </IconButton>
-          )}
-        </Stack>
+      <table>
+        <tr className="action-header">
+          <td className="start-icon-button">{true && <ActionToggleEmailComponent id={edge.id} edge={edge} />}</td>
+          <td className="label">{true && <ActionLabelComponent id={edge.id} edge={edge} />}</td>
+          <td className="variant-email">{edge.data?.isEmailAction && edge.data.variants.length === 1 && <VariantEmailComponent id={edge.id} index={0} variant={edge.data.variants[0]} />}</td>
+          <td className="variant-has-reminder">{edge.data?.isEmailAction && edge.data.variants.length === 1 && <VariantToggleReminderComponent id={edge.id} index={0} variant={edge.data.variants[0]} />}</td>
+          <td className="variant-reminder-email">{edge.data?.isEmailAction && edge.data.variants.length === 1 && edge.data.variants[0].hasReminder && <VariantReminderEmailComponent id={edge.id} index={0} variant={edge.data.variants[0]} />}</td>
+          <td className="variant-has-constraints">{edge.data?.variants.length === 1 && <VariantToggleConstraintsComponent id={edge.id} index={0} variant={edge.data.variants[0]} />}</td>
+          <td className="variant-constraints">{edge.data?.variants.length === 1 && edge.data.variants[0].hasConstraints && <VariantConstraintsComponent id={edge.id} index={0} variant={edge.data.variants[0]} />}</td>
+          <td className="action-add-variant">{true && <ActionAddVariantComponent id={edge.id} edge={edge} onClick={() => setExpanded(true)} />}</td>
+          <td className="end-icon-button">{edge.data?.variants.length !== 1 && <VariantExpandComponent expanded={expanded} setExpanded={setExpanded} />}</td>
+        </tr>
         {expanded &&
-          edge.data &&
-          edge.data.variants.length > 1 &&
           edge.data?.variants.map((variant, index) => (
-            <Stack key={index} direction="row" spacing={1}>
-              <VariantComponent //
-                edgeId={edge.id}
-                index={index}
-                variant={variant}
-                showName={true}
-                showTemplates={edge.data?.isEmailAction ?? false}
-                showRemove={true}
-                remove={() => removeVariant(index)}
-              />
-            </Stack>
+            <tr key={index} className="action-variant">
+              <td className="start-icon-button"></td>
+              <td className="label">{true && <VariantNameComponent id={edge.id} index={index} variant={variant} />}</td>
+              <td className="variant-email">{edge.data?.isEmailAction && <VariantEmailComponent id={edge.id} index={index} variant={variant} />}</td>
+              <td className="variant-has-reminder">{edge.data?.isEmailAction && <VariantToggleReminderComponent id={edge.id} index={index} variant={variant} />}</td>
+              <td className="variant-reminder-email">{edge.data?.isEmailAction && edge.data.variants[index].hasReminder && <VariantReminderEmailComponent id={edge.id} index={index} variant={variant} />}</td>
+              <td className="variant-has-constraints">{true && <VariantToggleConstraintsComponent id={edge.id} index={index} variant={variant} />}</td>
+              <td className="variant-constraints">{edge.data?.variants[index].hasConstraints && <VariantConstraintsComponent id={edge.id} index={index} variant={variant} />}</td>
+              <td className="action-add-variant"></td>
+              <td className="end-icon-button">
+                {true && (
+                  <VariantRemoveComponent
+                    id={edge.id}
+                    index={index}
+                    variant={edge.data!.variants[index]}
+                    onClick={() => {
+                      edge.data?.variants.length === 2 && setExpanded(false);
+                    }}
+                  />
+                )}
+              </td>
+            </tr>
           ))}
-      </Stack>
+      </table>
     </div>
   );
 };
@@ -305,32 +174,36 @@ const CustomEdgeToolbarComponent: React.FC<CustomEdgeToolbarProps> = ({ edge, ed
 // ------------------------------------------------------------------------------------------------
 
 type ToggleButtonProps = {
+  className?: string;
   iconOn: React.ReactElement;
   iconOff: React.ReactElement;
   value: boolean;
   onToggle: (value: boolean) => void;
   tooltip?: string;
 };
-export const ToggleButtonComponent: React.FC<ToggleButtonProps> = ({ iconOn, iconOff, value, onToggle, tooltip }) => {
+const ToggleButtonComponent: React.FC<ToggleButtonProps> = ({ className, iconOn, iconOff, value, onToggle, tooltip }) => {
   return (
-    <Tooltip placement="top" arrow disableInteractive title={tooltip}>
-      <IconButton size="small" onClick={() => onToggle(!value)}>
-        {value ? iconOn : iconOff}
-      </IconButton>
-    </Tooltip>
+    <div className={className}>
+      <Tooltip placement="top" arrow disableInteractive title={tooltip}>
+        <IconButton size="small" onClick={() => onToggle(!value)}>
+          {value ? iconOn : iconOff}
+        </IconButton>
+      </Tooltip>
+    </div>
   );
 };
 
 // ------------------------------------------------------------------------------------------------
 
 type FileUploadProps = {
+  className?: string;
   value: string;
   onSet: (filename: string) => void;
   onReset: () => void;
   label1?: string;
   label2?: string;
 };
-export const FileUploadComponent: React.FC<FileUploadProps> = ({ value, onSet, onReset, label1, label2 }) => {
+const FileUploadComponent: React.FC<FileUploadProps> = ({ className, value, onSet, onReset, label1, label2 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -353,10 +226,9 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({ value, onSet, o
   };
 
   return (
-    <div>
+    <div className={className}>
       <input ref={fileInputRef} type="file" style={{ display: 'none' }} onChange={handleFileChange} />
       <TextField
-        label="Upload File"
         value={value}
         onChange={ev => onSet(ev.target.value)}
         InputProps={{
@@ -380,7 +252,7 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({ value, onSet, o
               )}
               <Tooltip placement="top" arrow disableInteractive title={`Upload ${label2} template`}>
                 <IconButton size="small" onClick={handleUploadClick}>
-                  <Upload />
+                  <Upload fontSize="small" />
                 </IconButton>
               </Tooltip>
             </InputAdornment>
@@ -388,7 +260,6 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({ value, onSet, o
         }}
         variant="standard"
         fullWidth
-        style={{ width: '250px' }}
       />
     </div>
   );
@@ -397,7 +268,7 @@ export const FileUploadComponent: React.FC<FileUploadProps> = ({ value, onSet, o
 // ------------------------------------------------------------------------------------------------
 
 // eslint-disable-next-line react-refresh/only-export-components
-export const LABELS: Record<ProcessConnection, string> = {
+const LABELS: Record<ProcessConnection, string> = {
   [ProcessConnection.AS2]: 'AS2',
   [ProcessConnection.SFTP_INTERNAL]: 'SFTP Internal',
   [ProcessConnection.SFTP_EXTERNAL]: 'SFTP External',
@@ -406,57 +277,183 @@ export const LABELS: Record<ProcessConnection, string> = {
   [ProcessConnection.WEBHOOK]: 'Web Hook',
 };
 
-type ConstraintsProps = {
-  connections: ProcessConnection[];
-  setConnections: (connections: ProcessConnection[]) => void;
+// ------------------------------------------------------------------------------------------------
+
+type VariantItemProps = {
+  className?: string;
+  id: string;
+  index: number;
+  variant: Variant;
 };
-export const ConstraintsComponent: React.FC<ConstraintsProps> = ({ connections, setConnections }) => {
+
+const VariantNameComponent: React.FC<VariantItemProps> = ({ className, id, index, variant }) => {
+  const { updateEdge } = useReactFlowHooks();
+  const setName = useCallback(
+    (value: string) => {
+      updateEdge(id, draft => {
+        draft.data = draft.data ?? {
+          isEmailAction: false,
+          variants: [],
+        };
+        draft.data.variants[index].label = value;
+      });
+    },
+    [id, index, updateEdge],
+  );
+  return (
+    <div className={className}>
+      <Tooltip placement="top" arrow disableInteractive title="Variant name is for display purposes only">
+        <TextField //
+          className={className}
+          placeholder="Variant name"
+          size="small"
+          variant="standard"
+          value={variant.label}
+          onChange={ev => setName(ev.target.value)}
+          style={{ width: '200px' }}
+          inputProps={{ style: { height: '26px' } }}
+        />
+      </Tooltip>
+    </div>
+  );
+};
+
+const VariantEmailComponent: React.FC<VariantItemProps> = ({ className, id, index, variant }) => {
+  const { updateEdge } = useReactFlowHooks();
+  const setEmailTemplate = useCallback(
+    (value: string) => {
+      updateEdge(id, draft => {
+        draft.data = draft.data ?? {
+          isEmailAction: false,
+          variants: [],
+        };
+        draft.data.variants[index].emailTemplate = value;
+      });
+    },
+    [id, index, updateEdge],
+  );
+  return (
+    <FileUploadComponent //
+      className={className}
+      value={variant.emailTemplate}
+      onSet={setEmailTemplate}
+      onReset={() => setEmailTemplate('')}
+      label1="Email"
+      label2="email"
+    />
+  );
+};
+
+const VariantToggleReminderComponent: React.FC<VariantItemProps> = ({ className, id, index, variant }) => {
+  const { updateEdge } = useReactFlowHooks();
+  const setHasReminder = useCallback(
+    (value: boolean) => {
+      updateEdge(id, draft => {
+        draft.data = draft.data ?? {
+          isEmailAction: false,
+          variants: [],
+        };
+        draft.data.variants[index].hasReminder = value;
+      });
+    },
+    [id, index, updateEdge],
+  );
+  return (
+    <ToggleButtonComponent //
+      className={className}
+      iconOff={<AlarmOutlined />}
+      iconOn={<AlarmOnOutlined color="error" />}
+      value={variant.hasReminder}
+      onToggle={setHasReminder}
+      tooltip={variant.hasReminder ? 'Click to disable reminder for this variant' : 'Click to enable reminder for this variant'}
+    />
+  );
+};
+
+const VariantReminderEmailComponent: React.FC<VariantItemProps> = ({ className, id, index, variant }) => {
+  const { updateEdge } = useReactFlowHooks();
+  const setReminderEmailTemplate = useCallback(
+    (value: string) => {
+      updateEdge(id, draft => {
+        draft.data = draft.data ?? {
+          isEmailAction: false,
+          variants: [],
+        };
+        draft.data.variants[index].reminderEmailTemplate = value;
+      });
+    },
+    [id, index, updateEdge],
+  );
+  return (
+    <FileUploadComponent //
+      className={className}
+      value={variant.reminderEmailTemplate}
+      onSet={setReminderEmailTemplate}
+      onReset={() => setReminderEmailTemplate('')}
+      label1="Reminder email"
+      label2="reminder email"
+    />
+  );
+};
+
+const VariantToggleConstraintsComponent: React.FC<VariantItemProps> = ({ className, id, index, variant }) => {
+  const { updateEdge } = useReactFlowHooks();
+  const setHasConstraints = useCallback(
+    (value: boolean) => {
+      updateEdge(id, draft => {
+        draft.data = draft.data ?? {
+          isEmailAction: false,
+          variants: [],
+        };
+        draft.data.variants[index].hasConstraints = value;
+      });
+    },
+    [id, index, updateEdge],
+  );
+  return (
+    <ToggleButtonComponent //
+      className={className}
+      iconOff={<LockOpen />}
+      iconOn={<Lock color="error" />}
+      value={variant.hasConstraints}
+      onToggle={setHasConstraints}
+      tooltip={variant.hasConstraints ? 'Click to disable constraints for this variant' : 'Click to enable constraints for this variant'}
+    />
+  );
+};
+
+const VariantConstraintsComponent: React.FC<VariantItemProps> = ({ className, id, index, variant }) => {
+  const { updateEdge } = useReactFlowHooks();
   const [anchorEl, setAnchorEl] = useState<HTMLDivElement | null>(null);
+  const setConnections = useCallback(
+    (connections: ProcessConnection[]) => {
+      updateEdge(id, draft => {
+        draft.data = draft.data ?? {
+          isEmailAction: false,
+          variants: [],
+        };
+        draft.data.variants[index].constraintsConnectionsIn = connections;
+      });
+    },
+    [id, index, updateEdge],
+  );
   const toggleConnectionConstraint = useCallback(
     (value: ProcessConnection) => {
-      if (connections.includes(value)) {
-        setConnections(connections.filter(it => it !== value));
+      if (variant.constraintsConnectionsIn.includes(value)) {
+        setConnections(variant.constraintsConnectionsIn.filter(it => it !== value));
       } else {
-        setConnections([...connections, value]);
+        setConnections([...variant.constraintsConnectionsIn, value]);
       }
     },
-    [connections, setConnections],
+    [variant.constraintsConnectionsIn, setConnections],
   );
-  // const changeConnectionConstraints = useCallback(
-  //   (ev: SelectChangeEvent<ProcessConnection[]>) => {
-  //     const value = ev.target.value;
-  //     const values = typeof value === 'string' ? value.split(',').map(it => it as ProcessConnection) : value;
-  //     setConnections(values);
-  //   },
-  //   [setConnections],
-  // );
-  // const changeDirectionConstraints = useCallback(
-  //   (ev: SelectChangeEvent<ProcessDirection[]>) => {
-  //     const value = ev.target.value;
-  //     const values = typeof value === 'string' ? value.split(',').map(it => it as ProcessDirection) : value;
-  //     setDirections(values);
-  //   },
-  //   [setDirections],
-  // );
-  // const changeOriginConstraints = useCallback(
-  //   (ev: SelectChangeEvent<ProcessOrigin[]>) => {
-  //     const value = ev.target.value;
-  //     const values = typeof value === 'string' ? value.split(',').map(it => it as ProcessOrigin) : value;
-  //     setOrigins(values);
-  //   },
-  //   [setOrigins],
-  // );
-
   return (
-    <>
-      <Tooltip placement="top" arrow disableInteractive title={connections.length > 0 ? 'Connection constraints applied' : 'No connection constraints'}>
-        <IconButton size="small">{connections.length > 0 ? <Lock color="error" /> : <LockOpen />}</IconButton>
-      </Tooltip>
-      <div onClick={ev => setAnchorEl(ev.currentTarget)} style={{ width: '300px', marginTop: 'auto', marginBottom: 'auto' }}>
-        {connections.map(connection => (
-          <Chip key={connection} onDelete={() => setConnections(connections.filter(it => it !== connection))} label={LABELS[connection]} size="small" variant="outlined" color="default" />
+    <div className={className}>
+      <div className="chips" onClick={ev => setAnchorEl(ev.currentTarget)}>
+        {variant.constraintsConnectionsIn.map(connection => (
+          <Chip key={connection} onDelete={() => setConnections(variant.constraintsConnectionsIn.filter(it => it !== connection))} label={LABELS[connection]} size="small" variant="outlined" color="default" />
         ))}
-        {connections.length === 0 && <Chip label="Add constraints" size="small" variant="outlined" color="default" />}
+        {variant.constraintsConnectionsIn.length === 0 && <Chip label="Add constraints" size="small" variant="outlined" color="default" />}
       </div>
       <Popover
         open={!!anchorEl}
@@ -468,185 +465,174 @@ export const ConstraintsComponent: React.FC<ConstraintsProps> = ({ connections, 
           horizontal: 'left',
         }}>
         <List dense style={{ width: '400px' }}>
-          <ListItemButton dense selected={connections.includes(ProcessConnection.AS2)} onClick={() => toggleConnectionConstraint(ProcessConnection.AS2)}>
+          <ListItemButton dense selected={variant.constraintsConnectionsIn.includes(ProcessConnection.AS2)} onClick={() => toggleConnectionConstraint(ProcessConnection.AS2)}>
             AS2
           </ListItemButton>
-          <ListItemButton dense selected={connections.includes(ProcessConnection.SFTP_INTERNAL)} onClick={() => toggleConnectionConstraint(ProcessConnection.SFTP_INTERNAL)}>
+          <ListItemButton dense selected={variant.constraintsConnectionsIn.includes(ProcessConnection.SFTP_INTERNAL)} onClick={() => toggleConnectionConstraint(ProcessConnection.SFTP_INTERNAL)}>
             SFTP Internal
           </ListItemButton>
-          <ListItemButton dense selected={connections.includes(ProcessConnection.SFTP_EXTERNAL)} onClick={() => toggleConnectionConstraint(ProcessConnection.SFTP_EXTERNAL)}>
+          <ListItemButton dense selected={variant.constraintsConnectionsIn.includes(ProcessConnection.SFTP_EXTERNAL)} onClick={() => toggleConnectionConstraint(ProcessConnection.SFTP_EXTERNAL)}>
             SFTP External
           </ListItemButton>
-          <ListItemButton dense selected={connections.includes(ProcessConnection.HTTP)} onClick={() => toggleConnectionConstraint(ProcessConnection.HTTP)}>
+          <ListItemButton dense selected={variant.constraintsConnectionsIn.includes(ProcessConnection.HTTP)} onClick={() => toggleConnectionConstraint(ProcessConnection.HTTP)}>
             HTTP
           </ListItemButton>
-          <ListItemButton dense selected={connections.includes(ProcessConnection.VAN)} onClick={() => toggleConnectionConstraint(ProcessConnection.VAN)}>
+          <ListItemButton dense selected={variant.constraintsConnectionsIn.includes(ProcessConnection.VAN)} onClick={() => toggleConnectionConstraint(ProcessConnection.VAN)}>
             VAN
           </ListItemButton>
-          <ListItemButton dense selected={connections.includes(ProcessConnection.WEBHOOK)} onClick={() => toggleConnectionConstraint(ProcessConnection.WEBHOOK)}>
+          <ListItemButton dense selected={variant.constraintsConnectionsIn.includes(ProcessConnection.WEBHOOK)} onClick={() => toggleConnectionConstraint(ProcessConnection.WEBHOOK)}>
             Web Hook
           </ListItemButton>
-          {/* <ListItem dense>
-            <Select labelId="connections" value={connections ?? []} size="small" variant="standard" fullWidth multiple onChange={changeConnectionConstraints}>
-              <MenuItem value={ProcessConnection.AS2}>AS2</MenuItem>
-              <MenuItem value={ProcessConnection.SFTP}>SFTP</MenuItem>
-              <MenuItem value={ProcessConnection.SFTP_INTERNAL}>SFTP Internal</MenuItem>
-              <MenuItem value={ProcessConnection.SFTP_EXTERNAL}>SFTP External</MenuItem>
-              <MenuItem value={ProcessConnection.HTTP}>HTTP</MenuItem>
-              <MenuItem value={ProcessConnection.VAN}>VAN</MenuItem>
-              <MenuItem value={ProcessConnection.WEBHOOK}>Web Hook</MenuItem>
-              <InputLabel id="connections">Connections</InputLabel>
-            </Select>
-          </ListItem>
-          <ListItem dense>
-            <InputLabel id="origins">Directions</InputLabel>
-            <Select labelId="origins" value={directions ?? []} size="small" variant="standard" fullWidth multiple onChange={changeDirectionConstraints}>
-              <MenuItem value={ProcessDirection.INBOUND}>Inbound</MenuItem>
-              <MenuItem value={ProcessDirection.OUTBOUND}>Outbound</MenuItem>
-            </Select>
-          </ListItem>
-          <ListItem dense>
-            <InputLabel id="connections">Origins</InputLabel>
-            <Select labelId="connections" value={origins ?? []} size="small" variant="standard" fullWidth multiple onChange={changeOriginConstraints}>
-              <MenuItem value={ProcessOrigin.INTERNAL}>Internal</MenuItem>
-              <MenuItem value={ProcessOrigin.EXTERNAL}>External</MenuItem>
-            </Select>
-          </ListItem> */}
         </List>
       </Popover>
-    </>
+    </div>
   );
 };
 
-// ------------------------------------------------------------------------------------------------
-
-type VariantProps = {
-  edgeId: string;
-  index: number;
-  variant: Variant;
-  showName: boolean;
-  showTemplates: boolean;
-  showRemove: boolean;
-  remove: () => void;
-};
-
-const VariantComponent: React.FC<VariantProps> = ({ edgeId, index, variant, showName, showTemplates, showRemove, remove }) => {
+const VariantRemoveComponent: React.FC<VariantItemProps & { onClick: () => void }> = ({ className, id, index, onClick }) => {
   const { updateEdge } = useReactFlowHooks();
-  const setName = useCallback(
-    (value: string) => {
-      updateEdge(edgeId, draft => {
-        draft.data = draft.data ?? {
-          isEmailAction: false,
-          variants: [],
-        };
-        draft.data.variants[index].label = value;
-      });
-    },
-    [edgeId, index, updateEdge],
-  );
-
-  const setEmailTemplate = useCallback(
-    (value: string) => {
-      updateEdge(edgeId, draft => {
-        draft.data = draft.data ?? {
-          isEmailAction: false,
-          variants: [],
-        };
-        draft.data.variants[index].emailTemplate = value;
-      });
-    },
-    [edgeId, index, updateEdge],
-  );
-
-  const setHasReminder = useCallback(
-    (value: boolean) => {
-      updateEdge(edgeId, draft => {
-        draft.data = draft.data ?? {
-          isEmailAction: false,
-          variants: [],
-        };
-        draft.data.variants[index].hasReminder = value;
-      });
-    },
-    [edgeId, index, updateEdge],
-  );
-
-  const setReminderEmailTemplate = useCallback(
-    (value: string) => {
-      updateEdge(edgeId, draft => {
-        draft.data = draft.data ?? {
-          isEmailAction: false,
-          variants: [],
-        };
-        draft.data.variants[index].reminderEmailTemplate = value;
-      });
-    },
-    [edgeId, index, updateEdge],
-  );
-
-  const setConnections = useCallback(
-    (connections: ProcessConnection[]) => {
-      updateEdge(edgeId, draft => {
-        draft.data = draft.data ?? {
-          isEmailAction: false,
-          variants: [],
-        };
-        draft.data.variants[index].constraintsConnectionsIn = connections;
-      });
-    },
-    [edgeId, index, updateEdge],
-  );
-
+  const remove = useCallback(() => {
+    updateEdge(id, draft => {
+      draft.data = draft.data ?? {
+        isEmailAction: false,
+        variants: [],
+      };
+      draft.data.variants.splice(index, 1);
+    });
+    onClick();
+  }, [id, index, onClick, updateEdge]);
   return (
-    <>
-      {showName && (
-        <Tooltip placement="top" arrow disableInteractive title="Variant name is for display purposes only">
+    <Tooltip placement="top" arrow disableInteractive title="Remove this variant">
+      <IconButton className={className} onClick={remove}>
+        <Clear />
+      </IconButton>
+    </Tooltip>
+  );
+};
+
+type ActionItemProps = {
+  className?: string;
+  id: string;
+  edge: Edge<Action>;
+};
+
+const ActionToggleEmailComponent: React.FC<ActionItemProps> = ({ className, id, edge }) => {
+  const { updateEdge } = useReactFlowHooks();
+  const toggleEmailAction = useCallback(() => {
+    updateEdge(id, draft => {
+      draft.data = draft.data ?? {
+        isEmailAction: false,
+        variants: [],
+      };
+      if (draft.data.isEmailAction) {
+        draft.data.isEmailAction = false;
+        draft.data.variants = draft.data.variants.slice(0, 1);
+      } else {
+        draft.data.isEmailAction = true;
+      }
+    });
+  }, [id, updateEdge]);
+  return <ToggleButtonComponent className={className} iconOn={<MailOutline color="error" />} iconOff={<MailOutline />} value={edge.data?.isEmailAction ?? false} onToggle={toggleEmailAction} tooltip={edge.data?.isEmailAction ?? false ? 'Click to revert to a simple action' : 'Click to convert to an email action'} />;
+};
+
+const ActionLabelComponent: React.FC<ActionItemProps> = ({ className, id, edge }) => {
+  const { updateEdge } = useReactFlowHooks();
+  const onAutoCompleteChange = useCallback(
+    async (_ev: SyntheticEvent, value: AutocompleteValue<React.ReactNode, false, true, true>) => {
+      updateEdge(id, draft => {
+        draft.label = value;
+        draft.data = ACTION_MAP[value as AutoCompleteOptions] ?? draft.data;
+      });
+    },
+    [id, updateEdge],
+  );
+  return (
+    <div className={className}>
+      <Autocomplete //
+        id="tags-standard"
+        freeSolo
+        disableClearable
+        autoFocus
+        autoSelect
+        value={edge.label ?? ''}
+        options={AUTOCOMPLETE_OPTIONS}
+        onChange={onAutoCompleteChange}
+        componentsProps={{ popper: { style: { width: 300 } } }}
+        renderOption={(props, option, { selected }) => (
+          <ListItem dense disablePadding disableGutters {...props} selected={selected}>
+            {option}
+          </ListItem>
+        )}
+        renderInput={params => (
           <TextField //
-            label="Variant name"
-            size="small"
+            {...params}
+            autoFocus
             variant="standard"
-            value={variant.label}
-            onChange={ev => setName(ev.target.value)}
-            style={{ width: '200px' }}
-            inputProps={{ style: { height: '26px' } }}
+            placeholder="Name"
+            fullWidth
           />
+        )}
+      />
+    </div>
+  );
+};
+
+const ActionAddVariantComponent: React.FC<ActionItemProps & { onClick: () => void }> = ({ className, id, edge, onClick }) => {
+  const { updateEdge } = useReactFlowHooks();
+  const addVariant = useCallback(() => {
+    updateEdge(id, draft => {
+      draft.data = draft.data ?? {
+        isEmailAction: false,
+        variants: [],
+      };
+      draft.data.variants.push({
+        label: ``,
+        emailTemplate: '',
+        hasReminder: false,
+        reminderEmailTemplate: '',
+        hasConstraints: false,
+        constraintsConnectionsIn: [],
+        constraintsConnectionsNotIn: [],
+        constraintsOriginsIn: [],
+        constraintsOriginsNotIn: [],
+        constraintsDirectionsIn: [],
+        constraintsDirectionsNotIn: [],
+        constraintsStatesIn: [],
+        constraintsStatesNotIn: [],
+      });
+    });
+    onClick();
+  }, [id, onClick, updateEdge]);
+  return (
+    <div className={className}>
+      <div>
+        <Tooltip placement="top" arrow disableInteractive title="Add a new variant">
+          <Button size="small" variant="outlined" onClick={addVariant}>
+            Add Variant{edge.data?.variants.length === 1 ? '' : ` [${edge.data?.variants.length}]`}
+          </Button>
+        </Tooltip>
+      </div>
+    </div>
+  );
+};
+
+type VariantExpandCollapseProps = {
+  expanded: boolean;
+  setExpanded: (value: boolean) => void;
+};
+
+const VariantExpandComponent: React.FC<VariantExpandCollapseProps> = ({ expanded, setExpanded }) => {
+  return (
+    <IconButton size="small" onClick={() => setExpanded(!expanded)}>
+      {expanded ? (
+        <Tooltip placement="top" arrow disableInteractive title="Hide variants">
+          <ExpandMore />
+        </Tooltip>
+      ) : (
+        <Tooltip placement="top" arrow disableInteractive title="Show variants">
+          <ExpandLess />
         </Tooltip>
       )}
-      {showTemplates && (
-        <FileUploadComponent //
-          value={variant.emailTemplate}
-          onSet={setEmailTemplate}
-          onReset={() => setEmailTemplate('')}
-          label1="Email"
-          label2="email"
-        />
-      )}
-      {showTemplates && (
-        <ToggleButtonComponent //
-          iconOff={<AlarmOutlined />}
-          iconOn={<AlarmOnOutlined />}
-          value={variant.hasReminder}
-          onToggle={setHasReminder}
-          tooltip={variant.hasReminder ? 'Click to disable reminder for this variant' : 'Click to enable reminder for this variant'}
-        />
-      )}
-      {variant.hasReminder && showTemplates && (
-        <FileUploadComponent //
-          value={variant.reminderEmailTemplate}
-          onSet={setReminderEmailTemplate}
-          onReset={() => setReminderEmailTemplate('')}
-          label1="Reminder email"
-          label2="reminder email"
-        />
-      )}
-      <ConstraintsComponent connections={variant.constraintsConnectionsIn} setConnections={setConnections} />
-      {showRemove && (
-        <Tooltip placement="top" arrow disableInteractive title="Remove this variant">
-          <IconButton onClick={remove}>
-            <Clear />
-          </IconButton>
-        </Tooltip>
-      )}
-    </>
+    </IconButton>
   );
 };
