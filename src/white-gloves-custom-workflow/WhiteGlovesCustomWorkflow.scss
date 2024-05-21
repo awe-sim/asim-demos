@@ -426,7 +426,16 @@ input {
 }
 
 .MuiTooltip-tooltip {
+  opacity: 0.5;
   font-size: 13px !important;
-  background-color: #00000080 !important;
+  background-color: #ffffff !important;
+  color: #000000c0 !important;
+  border: 1px solid #c0c0c0 !important;
   z-index: 1000 !important;
+  box-shadow: 0 0 10px #c0c0c0;
+  .MuiTooltip-arrow {
+    color: #ffffff !important;
+    text-shadow: 0 0 10px #000000;
+    border: 1px solid #c0c0c0 !important;
+  }
 }

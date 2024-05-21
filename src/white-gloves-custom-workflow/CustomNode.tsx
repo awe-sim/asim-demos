@@ -120,7 +120,7 @@ export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging,
   const onInputBlur = useCallback<React.FocusEventHandler>(() => {
     updateNode(id, draft => {
       draft.data.isEditing = false;
-    });
+          });
   }, [id, updateNode]);
 
   const setType = useCallback(
@@ -213,7 +213,7 @@ export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging,
                     {...params}
                     autoFocus
                     variant="standard"
-                    placeholder="Name"
+                    placeholder="Stage name"
                     onBlur={onInputBlur}
                   />
                 )}

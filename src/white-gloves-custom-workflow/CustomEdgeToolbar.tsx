@@ -142,44 +142,46 @@ const CustomEdgeToolbarComponent: React.FC<CustomEdgeToolbarProps> = ({ edge, ed
   return (
     <div onDoubleClick={prevent} className="edge-toolbar" style={{ left: edgeLabelCoords?.x, top: edgeLabelCoords?.y }}>
       <table>
-        <tr className="action-header">
-          <td className="start-icon-button">{true && <ActionToggleEmailComponent id={edge.id} edge={edge} />}</td>
-          <td className="label">{true && <ActionLabelComponent id={edge.id} edge={edge} />}</td>
-          <td className="variant-email">{edge.data?.isEmailAction && edge.data.variants.length === 1 && <VariantEmailComponent id={edge.id} index={0} variant={edge.data.variants[0]} />}</td>
-          <td className="variant-has-reminder">{edge.data?.isEmailAction && edge.data.variants.length === 1 && <VariantToggleReminderComponent id={edge.id} index={0} variant={edge.data.variants[0]} />}</td>
-          <td className="variant-reminder-email">{edge.data?.isEmailAction && edge.data.variants.length === 1 && edge.data.variants[0].hasReminder && <VariantReminderEmailComponent id={edge.id} index={0} variant={edge.data.variants[0]} />}</td>
-          <td className="variant-has-constraints">{edge.data?.variants.length === 1 && <VariantToggleConstraintsComponent id={edge.id} index={0} variant={edge.data.variants[0]} />}</td>
-          <td className="variant-constraints">{edge.data?.variants.length === 1 && edge.data.variants[0].hasConstraints && <VariantConstraintsComponent id={edge.id} index={0} variant={edge.data.variants[0]} />}</td>
-          <td className="action-add-variant">{true && <ActionAddVariantComponent id={edge.id} edge={edge} onClick={() => setExpanded(true)} />}</td>
-          <td className="end-icon-button">{edge.data?.variants.length !== 1 && <VariantExpandComponent expanded={expanded} setExpanded={setExpanded} />}</td>
-        </tr>
-        {expanded &&
-          edge.data?.variants.map((variant, index) => (
-            <tr key={index} className="action-variant">
-              <td className="index">
-                <div>{index + 1}</div>
-              </td>
-              <td className="label">{true && <VariantNameComponent id={edge.id} index={index} variant={variant} />}</td>
-              <td className="variant-email">{edge.data?.isEmailAction && <VariantEmailComponent id={edge.id} index={index} variant={variant} />}</td>
-              <td className="variant-has-reminder">{edge.data?.isEmailAction && <VariantToggleReminderComponent id={edge.id} index={index} variant={variant} />}</td>
-              <td className="variant-reminder-email">{edge.data?.isEmailAction && edge.data.variants[index].hasReminder && <VariantReminderEmailComponent id={edge.id} index={index} variant={variant} />}</td>
-              <td className="variant-has-constraints">{true && <VariantToggleConstraintsComponent id={edge.id} index={index} variant={variant} />}</td>
-              <td className="variant-constraints">{edge.data?.variants[index].hasConstraints && <VariantConstraintsComponent id={edge.id} index={index} variant={variant} />}</td>
-              <td className="action-add-variant"></td>
-              <td className="end-icon-button">
-                {true && (
-                  <VariantRemoveComponent
-                    id={edge.id}
-                    index={index}
-                    variant={edge.data!.variants[index]}
-                    onClick={() => {
-                      edge.data?.variants.length === 2 && setExpanded(false);
-                    }}
-                  />
-                )}
-              </td>
-            </tr>
-          ))}
+        <tbody>
+          <tr className="action-header">
+            <td className="start-icon-button">{true && <ActionToggleEmailComponent id={edge.id} edge={edge} />}</td>
+            <td className="label">{true && <ActionLabelComponent id={edge.id} edge={edge} />}</td>
+            <td className="variant-email">{edge.data?.isEmailAction && edge.data.variants.length === 1 && <VariantEmailComponent id={edge.id} index={0} variant={edge.data.variants[0]} />}</td>
+            <td className="variant-has-reminder">{edge.data?.isEmailAction && edge.data.variants.length === 1 && <VariantToggleReminderComponent id={edge.id} index={0} variant={edge.data.variants[0]} />}</td>
+            <td className="variant-reminder-email">{edge.data?.isEmailAction && edge.data.variants.length === 1 && edge.data.variants[0].hasReminder && <VariantReminderEmailComponent id={edge.id} index={0} variant={edge.data.variants[0]} />}</td>
+            <td className="variant-has-constraints">{edge.data?.variants.length === 1 && <VariantToggleConstraintsComponent id={edge.id} index={0} variant={edge.data.variants[0]} />}</td>
+            <td className="variant-constraints">{edge.data?.variants.length === 1 && edge.data.variants[0].hasConstraints && <VariantConstraintsComponent id={edge.id} index={0} variant={edge.data.variants[0]} />}</td>
+            <td className="action-add-variant">{true && <ActionAddVariantComponent id={edge.id} edge={edge} onClick={() => setExpanded(true)} />}</td>
+            <td className="end-icon-button">{edge.data?.variants.length !== 1 && <VariantExpandComponent expanded={expanded} setExpanded={setExpanded} />}</td>
+          </tr>
+          {expanded &&
+            edge.data?.variants.map((variant, index) => (
+              <tr key={index} className="action-variant">
+                <td className="index">
+                  <div>{index + 1}</div>
+                </td>
+                <td className="label">{true && <VariantNameComponent id={edge.id} index={index} variant={variant} />}</td>
+                <td className="variant-email">{edge.data?.isEmailAction && <VariantEmailComponent id={edge.id} index={index} variant={variant} />}</td>
+                <td className="variant-has-reminder">{edge.data?.isEmailAction && <VariantToggleReminderComponent id={edge.id} index={index} variant={variant} />}</td>
+                <td className="variant-reminder-email">{edge.data?.isEmailAction && edge.data.variants[index].hasReminder && <VariantReminderEmailComponent id={edge.id} index={index} variant={variant} />}</td>
+                <td className="variant-has-constraints">{true && <VariantToggleConstraintsComponent id={edge.id} index={index} variant={variant} />}</td>
+                <td className="variant-constraints">{edge.data?.variants[index].hasConstraints && <VariantConstraintsComponent id={edge.id} index={index} variant={variant} />}</td>
+                <td className="action-add-variant"></td>
+                <td className="end-icon-button">
+                  {true && (
+                    <VariantRemoveComponent
+                      id={edge.id}
+                      index={index}
+                      variant={edge.data!.variants[index]}
+                      onClick={() => {
+                        edge.data?.variants.length === 2 && setExpanded(false);
+                      }}
+                    />
+                  )}
+                </td>
+              </tr>
+            ))}
+        </tbody>
       </table>
     </div>
   );
@@ -621,7 +623,7 @@ const ActionAddVariantComponent: React.FC<ActionItemProps & { onClick: () => voi
     <div className={className}>
       <div>
         <Tooltip placement="top" arrow disableInteractive title="Add a new variant">
-          <Button size="small" variant="outlined" onClick={addVariant}>
+          <Button size="small" variant="contained" onClick={addVariant}>
             Add Variant{edge.data?.variants.length === 1 ? '' : ` [${edge.data?.variants.length}]`}
           </Button>
         </Tooltip>
