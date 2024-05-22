@@ -200,7 +200,7 @@ type ToggleButtonProps = {
 const ToggleButtonComponent: React.FC<ToggleButtonProps> = ({ className, iconOn, iconOff, value, onToggle, tooltip }) => {
   return (
     <div className={className}>
-      <Tooltip placement="top" arrow disableInteractive title={tooltip}>
+      <Tooltip PopperProps={{ className: 'workflow'}} placement="top" arrow disableInteractive title={tooltip}>
         <IconButton size="small" onClick={() => onToggle(!value)}>
           {value ? iconOn : iconOff}
         </IconButton>
@@ -250,7 +250,7 @@ const FileUploadComponent: React.FC<FileUploadProps> = ({ className, value, onSe
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <Tooltip placement="top" arrow disableInteractive title={value ? `${label1} template configured` : `${label1} template not configured. Click the upload icon to configure an ${label2} template.`}>
+              <Tooltip PopperProps={{ className: 'workflow'}} placement="top" arrow disableInteractive title={value ? `${label1} template configured` : `${label1} template not configured. Click the upload icon to configure an ${label2} template.`}>
                 <IconButton size="small" color={value ? 'default' : 'warning'}>
                   <Mail fontSize="small" />
                 </IconButton>
@@ -260,13 +260,13 @@ const FileUploadComponent: React.FC<FileUploadProps> = ({ className, value, onSe
           endAdornment: (
             <InputAdornment position="end">
               {value && (
-                <Tooltip placement="top" arrow disableInteractive title={`Remove ${label2} template`}>
+                <Tooltip PopperProps={{ className: 'workflow'}} placement="top" arrow disableInteractive title={`Remove ${label2} template`}>
                   <IconButton size="small" onClick={handleClear}>
                     <Clear />
                   </IconButton>
                 </Tooltip>
               )}
-              <Tooltip placement="top" arrow disableInteractive title={`Upload ${label2} template`}>
+              <Tooltip PopperProps={{ className: 'workflow'}} placement="top" arrow disableInteractive title={`Upload ${label2} template`}>
                 <IconButton size="small" onClick={handleUploadClick}>
                   <Upload fontSize="small" />
                 </IconButton>
@@ -318,7 +318,7 @@ const VariantNameComponent: React.FC<VariantItemProps> = ({ className, id, index
   );
   return (
     <div className={className}>
-      <Tooltip placement="top" arrow disableInteractive title="Variant name is for display purposes only">
+      <Tooltip PopperProps={{ className: 'workflow'}} placement="top" arrow disableInteractive title="Variant name is for display purposes only">
         <TextField //
           className={className}
           placeholder="Variant name"
@@ -518,7 +518,7 @@ const VariantRemoveComponent: React.FC<VariantItemProps & { onClick: () => void 
     onClick();
   }, [id, index, onClick, updateEdge]);
   return (
-    <Tooltip placement="top" arrow disableInteractive title="Remove this variant">
+    <Tooltip PopperProps={{ className: 'workflow'}} placement="top" arrow disableInteractive title="Remove this variant">
       <IconButton className={className} onClick={remove}>
         <Clear />
       </IconButton>
@@ -622,7 +622,7 @@ const ActionAddVariantComponent: React.FC<ActionItemProps & { onClick: () => voi
   return (
     <div className={className}>
       <div>
-        <Tooltip placement="top" arrow disableInteractive title="Add a new variant">
+        <Tooltip PopperProps={{ className: 'workflow'}} placement="top" arrow disableInteractive title="Add a new variant">
           <Button size="small" variant="contained" onClick={addVariant}>
             Add Variant{edge.data?.variants.length === 1 ? '' : ` [${edge.data?.variants.length}]`}
           </Button>
@@ -641,11 +641,11 @@ const VariantExpandComponent: React.FC<VariantExpandCollapseProps> = ({ expanded
   return (
     <IconButton size="small" onClick={() => setExpanded(!expanded)}>
       {expanded ? (
-        <Tooltip placement="top" arrow disableInteractive title="Hide variants">
+        <Tooltip PopperProps={{ className: 'workflow'}} placement="top" arrow disableInteractive title="Hide variants">
           <ExpandMore />
         </Tooltip>
       ) : (
-        <Tooltip placement="top" arrow disableInteractive title="Show variants">
+        <Tooltip PopperProps={{ className: 'workflow'}} placement="top" arrow disableInteractive title="Show variants">
           <ExpandLess />
         </Tooltip>
       )}

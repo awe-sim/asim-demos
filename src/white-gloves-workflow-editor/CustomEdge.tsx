@@ -103,7 +103,7 @@ export const CustomEdge: React.FC<EdgeProps<Action>> = ({ id, sourceX, sourceY, 
                 <ContentCopyOutlined />
               </ListItemIcon>
             )}
-            <Tooltip
+            <Tooltip PopperProps={{ className: 'workflow'}}
               placement="top"
               arrow
               disableInteractive

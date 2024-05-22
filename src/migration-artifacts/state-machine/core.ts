@@ -7,9 +7,9 @@ function uniqueId(prefix?: string): string {
 }
 
 export enum EUser {
-  SYSTEM = 'SYSTEM',
+  SYSTEM = 'System',
   PLQ = 'PLQ',
-  PARTNER = 'PARTNER',
+  PARTNER = 'Partner',
 }
 
 export enum EState {
@@ -25,19 +25,19 @@ export enum EState {
 }
 
 export enum EAction {
-  CANCEL = 'CANCEL',
-  REOPEN = 'REOPEN',
-  REJECT = 'REJECT',
-  REQUEST = 'REQUEST',
-  RETRY_NOW = 'RETRY_NOW',
-  RETRY_LATER = 'RETRY_LATER',
-  REVERT_NOW = 'REVERT_NOW',
-  REVERT_LATER = 'REVERT_LATER',
-  RUN_NOW = 'RUN_NOW',
-  RUN_LATER = 'RUN_LATER',
-  SYSTEM_FAIL = 'SYSTEM_FAIL',
-  SYSTEM_OK = 'SYSTEM_OK',
-  SYSTEM_RUN = 'SYSTEM_RUN',
+  CANCEL = 'Cancel',
+  REOPEN = 'Reopen',
+  REJECT = 'Reject',
+  REQUEST = 'Request',
+  RETRY_NOW = 'Retry',
+  RETRY_LATER = 'Schedule retry',
+  REVERT_NOW = 'Revert',
+  REVERT_LATER = 'Schedule revert',
+  RUN_NOW = 'Run',
+  RUN_LATER = 'Schedule',
+  SYSTEM_FAIL = 'Fail',
+  SYSTEM_OK = 'Complete',
+  SYSTEM_RUN = 'Invoke',
 }
 
 export const STATE_LABELS: Record<EState, string> = {
@@ -58,14 +58,45 @@ export const ACTION_LABELS: Record<EAction, string> = {
   [EAction.REOPEN]: 'Reopen',
   [EAction.REQUEST]: 'Request',
   [EAction.RETRY_NOW]: 'Retry Now',
-  [EAction.RETRY_LATER]: 'Retry Later',
+  [EAction.RETRY_LATER]: 'Schedule Retry',
   [EAction.REVERT_NOW]: 'Revert Now',
-  [EAction.REVERT_LATER]: 'Revert Later',
+  [EAction.REVERT_LATER]: 'Schedule Revert',
   [EAction.RUN_NOW]: 'Run Now',
-  [EAction.RUN_LATER]: 'Run Later',
+  [EAction.RUN_LATER]: 'Schedule',
   [EAction.SYSTEM_FAIL]: 'Fail',
   [EAction.SYSTEM_OK]: 'OK',
   [EAction.SYSTEM_RUN]: 'Run',
+};
+
+export const CLONE_MIGRATIONS_FOR: Record<EAction, boolean> = {
+  [EAction.CANCEL]: false,
+  [EAction.REJECT]: false,
+  [EAction.REOPEN]: true,
+  [EAction.REQUEST]: false,
+  [EAction.RETRY_NOW]: true,
+  [EAction.RETRY_LATER]: true,
+  [EAction.REVERT_NOW]: true,
+  [EAction.REVERT_LATER]: true,
+  [EAction.RUN_NOW]: false,
+  [EAction.RUN_LATER]: false,
+  [EAction.SYSTEM_FAIL]: false,
+  [EAction.SYSTEM_OK]: false,
+  [EAction.SYSTEM_RUN]: false,
+};
+export const CLONE_MIGRATION_NAME: Record<EAction, (name: string) => string> = {
+  [EAction.CANCEL]: name => name,
+  [EAction.REJECT]: name => name,
+  [EAction.REOPEN]: name => `${name} (Reopened)`,
+  [EAction.REQUEST]: name => name,
+  [EAction.RETRY_NOW]: name => `${name} (Retry)`,
+  [EAction.RETRY_LATER]: name => `${name} (Retry)`,
+  [EAction.REVERT_NOW]: name => `${name} (Revert)`,
+  [EAction.REVERT_LATER]: name => `${name} (Revert)`,
+  [EAction.RUN_NOW]: name => name,
+  [EAction.RUN_LATER]: name => name,
+  [EAction.SYSTEM_FAIL]: name => name,
+  [EAction.SYSTEM_OK]: name => name,
+  [EAction.SYSTEM_RUN]: name => name,
 };
 
 export type StateMachine = Map<EState, UserTransitions>;
@@ -200,19 +231,19 @@ export class Root {
   }
   requestMigration(): Root {
     return produce(this, draft => {
-      draft.migrations.push(new Migration(v4(), uniqueId('Migration '), EUser.PARTNER, EState.REQUESTED));
+      draft.migrations.push(new Migration(v4(), uniqueId('Migration '), EUser.PARTNER, EState.REQUESTED, [`${EUser.PARTNER} → ${EAction.REQUEST}`]));
       draft.history.push(this);
     });
   }
   scheduleMigration(): Root {
     return produce(this, draft => {
-      draft.migrations.push(new Migration(v4(), uniqueId('Migration '), EUser.PLQ, EState.SCHEDULED));
+      draft.migrations.push(new Migration(v4(), uniqueId('Migration '), EUser.PLQ, EState.SCHEDULED, [`${EUser.PLQ} → ${EAction.RUN_LATER}`]));
       draft.history.push(this);
     });
   }
   runMigration(user: EUser): Root {
     return produce(this, draft => {
-      draft.migrations.push(new Migration(v4(), uniqueId('Migration '), user, EState.IN_PROGRESS));
+      draft.migrations.push(new Migration(v4(), uniqueId('Migration '), user, EState.IN_PROGRESS, [`${user} → ${EAction.RUN_NOW}`]));
       draft.history.push(this);
     });
   }
@@ -227,30 +258,11 @@ export class Root {
       if (!nextState) {
         throw new Error(`Invalid action ${action} for user ${user} in state ${migration.state}`);
       }
-      switch (action) {
-        case EAction.CANCEL:
-        case EAction.REJECT:
-        case EAction.REQUEST:
-        case EAction.RUN_NOW:
-        case EAction.RUN_LATER:
-        case EAction.SYSTEM_OK:
-        case EAction.SYSTEM_FAIL:
-        case EAction.SYSTEM_RUN:
-          draft.migrations[index].state = nextState;
-          break;
-          case EAction.REOPEN:
-          draft.migrations[index].state = nextState;
-          draft.migrations[index].name = `${migration.name} (Reopened)`
-          // draft.migrations.push(new Migration(v4(), `${migration.name} (Reopened)`, migration.user, nextState));
-          break;
-        case EAction.RETRY_NOW:
-        case EAction.RETRY_LATER:
-          draft.migrations.push(new Migration(v4(), `${migration.name} (Retry)`, migration.user, nextState));
-          break;
-        case EAction.REVERT_NOW:
-        case EAction.REVERT_LATER:
-          draft.migrations.push(new Migration(v4(), `${migration.name} (Revert)`, migration.user, nextState));
-          break;
+      if (CLONE_MIGRATIONS_FOR[action]) {
+        draft.migrations.push(new Migration(v4(), CLONE_MIGRATION_NAME[action](migration.name), user, nextState, [`${user} → ${action}`]));
+      } else {
+        draft.migrations[index].state = nextState;
+        draft.migrations[index].history.push(`${user} → ${action}`);
       }
       draft.history.push(this);
     });
@@ -269,11 +281,13 @@ export class Migration {
   readonly name: string;
   readonly user: EUser;
   readonly state: EState;
-  constructor(id: string, name: string, user: EUser, state: EState) {
+  readonly history: string[] = [];
+  constructor(id: string, name: string, user: EUser, state: EState, history: string[] = []) {
     this.id = id;
     this.name = name;
     this.user = user;
     this.state = state;
+    this.history = history;
   }
   getActions(user: EUser): EAction[] {
     return Array.from(STATE_MACHINE.get(this.state)?.[user]?.keys() ?? []);

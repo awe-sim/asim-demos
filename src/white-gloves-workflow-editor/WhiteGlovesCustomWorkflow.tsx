@@ -1,7 +1,8 @@
+import { CheckCircle, Warning } from '@mui/icons-material';
 import { Button, Stack, Tooltip } from '@mui/material';
 import { uniqueId } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import ReactFlow, { Background, BackgroundVariant, Controls, Edge, MiniMap, Node, OnConnect, OnEdgeUpdateFunc, OnNodesDelete, OnSelectionChangeFunc, ReactFlowInstance, addEdge, getConnectedEdges, getIncomers, getOutgoers, updateEdge, useEdgesState, useNodesState, useReactFlow } from 'reactflow';
+import ReactFlow, { addEdge, Background, BackgroundVariant, Controls, Edge, getConnectedEdges, getIncomers, getOutgoers, MiniMap, Node, OnConnect, OnEdgeUpdateFunc, OnNodesDelete, OnSelectionChangeFunc, ReactFlowInstance, ReactFlowProvider, updateEdge, useEdgesState, useNodesState, useReactFlow } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { useRecoilState, useSetRecoilState } from 'recoil';
 import { v4 } from 'uuid';
@@ -10,11 +11,18 @@ import { showToast2 } from '../common/MySnackbar';
 import { CustomEdge } from './CustomEdge';
 import { CustomEdgeToolbarPlaceholderComponent } from './CustomEdgeToolbar';
 import { CustomNode } from './CustomNode';
-import { deadEndNodeIdsState, Flag, flagState, selectedEdgeIdsState, selectedNodeIdsState, selectedProcessConnectionState, visitedIdsState } from './states';
-import { Action, ProcessConnection, State, Type } from './types';
-import './WhiteGlovesCustomWorkflow.scss';
-import { CheckCircle, Warning } from '@mui/icons-material';
 import { Graph } from './graph';
+import { deadEndNodeIdsState, Flag, flagState, selectedEdgeIdsState, selectedNodeIdsState, selectedProcessConnectionState, visitedIdsState } from './states';
+import './styles.scss';
+import { Action, ProcessConnection, State, Type } from './types';
+
+export const WhiteGlovesWorkflowEditor: React.FC = () => {
+  return (
+    <ReactFlowProvider>
+      <CanvasComponent />
+    </ReactFlowProvider>
+  )
+}
 
 const CONNECTIONS: ProcessConnection[] = [ProcessConnection.AS2, ProcessConnection.HTTP, ProcessConnection.SFTP_EXTERNAL, ProcessConnection.SFTP_INTERNAL, ProcessConnection.VAN, ProcessConnection.WEBHOOK];
 
@@ -112,7 +120,7 @@ const WORKFLOW_JSON = {
 
 const START_NODE: Node<State> = { id: v4(), data: { label: 'Start', type: Type.START, isEditing: false, isToolbarShowing: false }, position: { x: 200, y: 200 }, type: 'CustomNode' };
 
-export const WhiteGlovesCustomWorkflow: React.FC = () => {
+const CanvasComponent: React.FC = () => {
   //
   const ref = useRef<HTMLDivElement>(null);
 
@@ -411,7 +419,7 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
   }
 
   return (
-    <div style={{ width: '100vw', height: '100vh' }}>
+    <div className='white-gloves-workflow-editor' style={{ width: '100vw', height: '100vh' }}>
       <svg style={{ position: 'absolute', top: 0, left: 0 }}>
         <defs>
           <marker id="arrow-dark-grey-down" viewBox="0 0 10 6" markerWidth={10} markerHeight={5} refX={5} refY={5}>
@@ -453,22 +461,22 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
         <div style={{ position: 'absolute', bottom: 8, left: 40, padding: 8, zIndex: 100, backgroundColor: '#ffffffc0' }} onDoubleClick={prevent}>
           <Stack direction="column" spacing={1} style={{ marginTop: 8 }}>
             <Stack direction="row" spacing={1}>
-              <Tooltip placement="top" arrow disableInteractive title="Save the current workflow so that it loads automatically on page refresh">
+              <Tooltip PopperProps={{ className: 'workflow'}} placement="top" arrow disableInteractive title="Save the current workflow so that it loads automatically on page refresh">
                 <Button variant="outlined" size="small" onClick={save} onDoubleClick={prevent}>
                   Save
                 </Button>
               </Tooltip>
-              <Tooltip placement="top" arrow disableInteractive title="Load the last saved workflow">
+              <Tooltip PopperProps={{ className: 'workflow'}} placement="top" arrow disableInteractive title="Load the last saved workflow">
                 <Button variant="outlined" size="small" onClick={load} onDoubleClick={prevent}>
                   Reload
                 </Button>
               </Tooltip>
-              <Tooltip placement="top" arrow disableInteractive title="Clear the current workflow">
+              <Tooltip PopperProps={{ className: 'workflow'}} placement="top" arrow disableInteractive title="Clear the current workflow">
                 <Button variant="outlined" size="small" onClick={clear} onDoubleClick={prevent}>
                   Clear
                 </Button>
               </Tooltip>
-              <Tooltip placement="top" arrow disableInteractive title="Initialize the workflow with a predefined JSON">
+              <Tooltip PopperProps={{ className: 'workflow'}} placement="top" arrow disableInteractive title="Initialize the workflow with a predefined JSON">
                 <Button variant="outlined" size="small" onClick={initialize} onDoubleClick={prevent}>
                   Initialize WG Workflow
                 </Button>
@@ -476,7 +484,7 @@ export const WhiteGlovesCustomWorkflow: React.FC = () => {
             </Stack>
             <Stack direction="row" spacing={1}>
               {CONNECTIONS.map((connection, index) => (
-                <Tooltip key={connection} placement="top" arrow disableInteractive title={getConnectionTooltip(connection, connectionOk[index], selectedProcessConnection === connection)}>
+                <Tooltip PopperProps={{ className: 'workflow'}} key={connection} placement="top" arrow disableInteractive title={getConnectionTooltip(connection, connectionOk[index], selectedProcessConnection === connection)}>
                   <Button //
                     color={graph.isOk(connection) ? 'success' : 'warning'}
                     endIcon={graph.isOk(connection) ? <CheckCircle /> : <Warning />}

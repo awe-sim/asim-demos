@@ -1,0 +1,72 @@
+body {
+  margin: 16px;
+}
+
+.migration-artifacts-state-machine {
+
+  .MuiGrid-container {
+    margin-top: 0 !important;
+  }
+
+  .MuiCardContent-root {
+    padding-top: 0 !important;
+    padding-bottom: 16px !important;
+  }
+
+  .MuiList-root {
+    padding: 0 !important;
+  }
+
+  .MuiListItem-root {
+    height: 38px;
+
+    &:not(:last-child) {
+      border-bottom: 1px solid #e0e0e0;
+    }
+  }
+
+  .MuiChip-root {
+    border-radius: 6px !important;
+    width: 100px;
+
+    &.MuiChip-colorDefault {
+      color: #808080;
+      background-color: #80808020;
+      border-color: #808080;
+    }
+
+    &.MuiChip-colorError {
+      color: #f44336;
+      background-color: #f4433620;
+      border-color: #f44336;
+    }
+
+    &.MuiChip-colorWarning {
+      color: #ff9800;
+      background-color: #ff980020;
+      border-color: #ff9800;
+    }
+
+    &.MuiChip-colorSuccess {
+      color: #4caf50;
+      background-color: #4caf5020;
+      border-color: #4caf50;
+    }
+
+    &.MuiChip-colorPrimary {
+      color: #1976d2d0;
+      background-color: #1976d220;
+      border-color: #1976d2d0;
+    }
+
+    &.MuiChip-colorSecondary {
+      color: #9c27b0;
+      background-color: #9c27b020;
+      border-color: #9c27b0;
+    }
+  }
+
+  .migration-label {
+    
+  }
+}

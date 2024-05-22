@@ -1,14 +1,14 @@
+import { AlarmOutlined } from '@mui/icons-material';
 import { Autocomplete, AutocompleteValue, Button, IconButton, ListItem, Stack, TextField, Tooltip } from '@mui/material';
 import classNames from 'classnames';
 import { SyntheticEvent, useCallback, useEffect, useMemo } from 'react';
 import { Handle, NodeProps, NodeToolbar, Position, useEdges } from 'reactflow';
-import { useReactFlowHooks } from './hooks';
-import { Action, State, Type } from './types';
+import { useRecoilValue } from 'recoil';
 import { prevent } from '../common/helpers';
 import { showToast2 } from '../common/MySnackbar';
-import { AlarmOutlined } from '@mui/icons-material';
+import { useReactFlowHooks } from './hooks';
 import { deadEndNodeIdsState, selectedProcessConnectionState, visitedIdsState } from './states';
-import { useRecoilValue } from 'recoil';
+import { Action, State, Type } from './types';
 
 enum AutoCompleteOptions {
   START = 'Start',
@@ -175,7 +175,7 @@ export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging,
 
   return (
     <>
-      <Tooltip
+      <Tooltip PopperProps={{ className: 'workflow'}}
         placement="top"
         arrow
         disableInteractive
@@ -231,27 +231,27 @@ export const CustomNode: React.FC<NodeProps<State>> = ({ id, selected, dragging,
       </Tooltip>
       <NodeToolbar onDoubleClick={prevent} position={Position.Top} offset={20} className={classNames('node-toolbar', selected && 'selected', dragging && 'dragging')}>
         <Stack direction="row" spacing={1}>
-          <Tooltip placement="top" arrow disableInteractive title="Change this state to START. It is the first state in a workflow and can only have actions leading away from it.">
+          <Tooltip PopperProps={{ className: 'workflow'}} placement="top" arrow disableInteractive title="Change this state to START. It is the first state in a workflow and can only have actions leading away from it.">
             <Button className={classNames(Type.START, type === Type.START && 'selected')} variant="outlined" size="small" onClick={() => setType(Type.START)}>
               Start
             </Button>
           </Tooltip>
-          <Tooltip placement="top" arrow disableInteractive title="Change this state to REGULAR. This indicates to WG user that migration is progressing as expected.">
+          <Tooltip PopperProps={{ className: 'workflow'}} placement="top" arrow disableInteractive title="Change this state to REGULAR. This indicates to WG user that migration is progressing as expected.">
             <Button className={classNames(Type.NORMAL, type === Type.NORMAL && 'selected')} variant="outlined" size="small" onClick={() => setType(Type.NORMAL)}>
               Normal
             </Button>
           </Tooltip>
-          <Tooltip placement="top" arrow disableInteractive title="Change this state to AWAITING REPLY. This indicates to WG user a reply is being awaited from the partner.">
+          <Tooltip PopperProps={{ className: 'workflow'}} placement="top" arrow disableInteractive title="Change this state to AWAITING REPLY. This indicates to WG user a reply is being awaited from the partner.">
             <Button className={classNames(Type.AWAITING_REPLY, type === Type.AWAITING_REPLY && 'selected')} variant="outlined" size="small" onClick={() => setType(Type.AWAITING_REPLY)}>
               Awaiting reply
             </Button>
           </Tooltip>
-          <Tooltip placement="top" arrow disableInteractive title="Change this state to ERROR. This indicates to WG user that an intervention is required to bring the migration back on track.">
+          <Tooltip PopperProps={{ className: 'workflow'}} placement="top" arrow disableInteractive title="Change this state to ERROR. This indicates to WG user that an intervention is required to bring the migration back on track.">
             <Button className={classNames(Type.ERROR, type === Type.ERROR && 'selected')} variant="outlined" size="small" onClick={() => setType(Type.ERROR)}>
               Error
             </Button>
           </Tooltip>
-          <Tooltip placement="top" arrow disableInteractive title="Change this state to DONE. This indicates to WG user that the migration is complete. It is the last state in a workflow and can only have actions leading to it. In order to support a particular connection type, there must be a valid path from START to DONE for that connection type.">
+          <Tooltip PopperProps={{ className: 'workflow'}} placement="top" arrow disableInteractive title="Change this state to DONE. This indicates to WG user that the migration is complete. It is the last state in a workflow and can only have actions leading to it. In order to support a particular connection type, there must be a valid path from START to DONE for that connection type.">
             <Button className={classNames(Type.DONE, type === Type.DONE && 'selected')} variant="outlined" size="small" onClick={() => setType(Type.DONE)}>
               Done
             </Button>
