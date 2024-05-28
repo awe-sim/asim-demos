@@ -5,7 +5,7 @@ import { MigrationArtifactsStateMachineComponent } from './migration-artifacts/s
 import { CustomerSelection } from './security-center-customer-selection/components';
 import { FilterComponent } from './security-center-filters/filterComponents';
 import { ReleaseComponent } from './white-gloves-process-flow/ReleaseComponent';
-import { WhiteGlovesWorkflowEditor } from './white-gloves-workflow-editor/WhiteGlovesCustomWorkflow';
+import { WhiteGlovesWorkflowEditor } from './white-gloves-workflow-editor-v2/WhiteGlovesWorkflowEditor';
 
 export const App: React.FC = () => {
   return (

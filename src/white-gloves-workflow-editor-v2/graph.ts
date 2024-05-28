@@ -1,10 +1,10 @@
-import { Edge, Node } from 'reactflow';
-import { Action, ProcessConnection, Stage, Type } from './types';
 import { uniq } from 'lodash';
+import { Edge, Node } from 'reactflow';
+import { Action, Constraint, Stage, StageType } from './types';
 
 type GraphEdge = {
   id: string;
-  type: ProcessConnection;
+  type: Constraint;
   from: string;
   to: string;
 };
@@ -25,7 +25,7 @@ export class Graph {
     const edges = rfEdges
       .map(edge =>
         (edge.data?.variants ?? []).map(variant =>
-          (variant.constraintsConnectionsIn.length !== 0 ? variant.constraintsConnectionsIn : [ProcessConnection.AS2, ProcessConnection.HTTP, ProcessConnection.SFTP_EXTERNAL, ProcessConnection.SFTP_INTERNAL, ProcessConnection.VAN, ProcessConnection.WEBHOOK]).map(connection => ({
+          (variant.constraints.length !== 0 ? variant.constraints : [Constraint.AS2, Constraint.HTTP, Constraint.SFTP_EXTERNAL, Constraint.SFTP_INTERNAL, Constraint.VAN, Constraint.WEBHOOK]).map(connection => ({
             id: edge.id,
             type: connection,
             from: edge.source,
@@ -35,17 +35,17 @@ export class Graph {
       )
       .flat()
       .flat();
-    const startNodeIds = rfNodes.filter(node => node.data.type === Type.START).map(node => node.id);
-    const endNodeIds = rfNodes.filter(node => node.data.type === Type.DONE).map(node => node.id);
+    const startNodeIds = rfNodes.filter(node => node.data.type === StageType.START).map(node => node.id);
+    const endNodeIds = rfNodes.filter(node => node.data.type === StageType.DONE).map(node => node.id);
     return new Graph(nodes, edges, startNodeIds, endNodeIds);
   }
-  get connectionsUsed(): ProcessConnection[] {
+  get connectionsUsed(): Constraint[] {
     return uniq(this.edges.map(edge => edge.type));
   }
-  getEdgesFromNode(nodeId: string, connection: ProcessConnection): GraphEdge[] {
+  getEdgesFromNode(nodeId: string, connection: Constraint): GraphEdge[] {
     return this.edges.filter(edge => edge.from === nodeId && edge.type === connection);
   }
-  private _recursivelyVisitOnceAndReturnAllValues<T>(nodeId: string, connection: ProcessConnection, visited: Set<string>, fn: (nodeId: string) => T | undefined): (T | undefined)[] {
+  private _recursivelyVisitOnceAndReturnAllValues<T>(nodeId: string, connection: Constraint, visited: Set<string>, fn: (nodeId: string) => T | undefined): (T | undefined)[] {
     if (visited.has(nodeId)) {
       return [];
     }
@@ -54,30 +54,33 @@ export class Graph {
     const nextEdges = this.getEdgesFromNode(nodeId, connection);
     return [value].concat(nextEdges.map(edge => this._recursivelyVisitOnceAndReturnAllValues(edge.to, connection, visited, fn)).flat());
   }
-  recursivelyVisitOnceAndReturnValues<T>(connection: ProcessConnection, fn: (nodeId: string) => T | undefined): (T | undefined)[] {
+  recursivelyVisitOnceAndReturnValues<T>(connection: Constraint, fn: (nodeId: string) => T | undefined): (T | undefined)[] {
     const visited = new Set<string>();
     return this.startNodeIds.map(nodeId => this._recursivelyVisitOnceAndReturnAllValues(nodeId, connection, visited, fn)).flat();
   }
-  hasPathsFromStartToEnd(connection: ProcessConnection): boolean {
+  hasPathsFromStartToEnd(connection: Constraint): boolean {
     const list = this.recursivelyVisitOnceAndReturnValues(connection, nodeId => this.endNodeIds.includes(nodeId));
     return list.some(value => !!value);
   }
-  hasDeadEnds(connection: ProcessConnection): boolean {
+  hasDeadEnds(connection: Constraint): boolean {
     const list = this.recursivelyVisitOnceAndReturnValues(connection, nodeId => !this.endNodeIds.includes(nodeId) && this.getEdgesFromNode(nodeId, connection).length === 0);
     return list.some(value => !!value);
   }
-  isOk(connection: ProcessConnection): boolean {
+  isOk(connection: Constraint): boolean {
     return !this.hasDeadEnds(connection) && this.hasPathsFromStartToEnd(connection);
   }
-  getVisitableNodes(connection: ProcessConnection): string[] {
+  getVisitableNodeIds(connection: Constraint): string[] {
     const visited = new Set<string>();
     this.startNodeIds.forEach(nodeId => this._recursivelyVisitOnceAndReturnAllValues(nodeId, connection, visited, () => undefined));
     return Array.from(visited);
   }
-  getVisitableEdgeIds(connection: ProcessConnection): string[] {
-    return this.edges.filter(edge => edge.type === connection && this.getVisitableNodes(connection).includes(edge.from)).map(edge => edge.id);
+  getVisitableEdgeIds(connection: Constraint): string[] {
+    return this.edges.filter(edge => edge.type === connection && this.getVisitableNodeIds(connection).includes(edge.from)).map(edge => edge.id);
   }
-  getDeadEndNodeIds(connection: ProcessConnection): string[] {
-    return this.getVisitableNodes(connection).filter(nodeId => !this.endNodeIds.includes(nodeId) && this.getEdgesFromNode(nodeId, connection).length === 0);
+  getVisitableIds(connection: Constraint): string[] {
+    return this.getVisitableNodeIds(connection).concat(this.getVisitableEdgeIds(connection));
+  }
+  getDeadEndNodeIds(connection: Constraint): string[] {
+    return this.getVisitableNodeIds(connection).filter(nodeId => !this.endNodeIds.includes(nodeId) && this.getEdgesFromNode(nodeId, connection).length === 0);
   }
 }

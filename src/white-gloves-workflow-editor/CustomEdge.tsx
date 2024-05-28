@@ -5,7 +5,7 @@ import { useEffect, useMemo } from 'react';
 import { BaseEdge, EdgeLabelRenderer, EdgeProps, MarkerType, Position, getBezierPath, useReactFlow, useViewport } from 'reactflow';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { selectedProcessConnectionState, selectedEdgeLabelCoordsState, visitedIdsState } from './states';
-import { Action, State } from './types';
+import { Action, Stage } from './types';
 import { prevent } from '../common/helpers';
 
 export const CustomEdge: React.FC<EdgeProps<Action>> = ({ id, sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition, selected, label, data, ...props }) => {
@@ -16,7 +16,7 @@ export const CustomEdge: React.FC<EdgeProps<Action>> = ({ id, sourceX, sourceY, 
   const shouldMakeTransparent = selectedConnection && !visitedIds.has(id);
   const shouldEnhance = !!selectedConnection && visitedIds.has(id);
 
-  const { flowToScreenPosition } = useReactFlow<State, Action>();
+  const { flowToScreenPosition } = useReactFlow<Stage, Action>();
   const viewport = useViewport();
 
   const setEdgeLabelCoords = useSetRecoilState(selectedEdgeLabelCoordsState);

@@ -44,3 +44,8 @@ export const flagState = atom<Flag>({
   key: 'flag',
   default: Flag.FIRST_TIME,
 });
+
+export const tipsClosedState = atom<boolean>({
+  key: 'tipsClosed',
+  default: false,
+});

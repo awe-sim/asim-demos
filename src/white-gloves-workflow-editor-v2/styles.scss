@@ -18,7 +18,7 @@ $FG_CLR_TEAL: #2d8677;
 
 $OUTLINE_WIDTH: 1px;
 $OUTLINE_WIDTH_SELECTED: 3px;
-$HANDLE_GRIP_SIZE: 17px;
+$HANDLE_GRIP_SIZE: 15px;
 $HANDLE_SIZE: 5px;
 $HANDLE_SPACING_X: 20px;
 $HANDLE_SPACING_Y: 13px;
@@ -42,6 +42,41 @@ $NODE_BG_COLORS: (
   teal: $BG_CLR_TEAL
 );
 
+// .test {
+//   background-color: $BG_CLR_BLUE;
+//   border-radius: $HANDLE_BORDER_RADIUS;
+//   cursor: pointer;
+//   height: $HANDLE_SIZE;
+//   left: 100px;
+//   outline-offset: -$OUTLINE_WIDTH;
+//   outline: $OUTLINE_WIDTH solid $FG_CLR_BLUE;
+//   top: 100px;
+//   width: $HANDLE_SIZE;
+//   z-index: 100;
+
+//   div {
+//     background: none;
+//     border-radius: $HANDLE_BORDER_RADIUS;
+//     height: $HANDLE_GRIP_SIZE;
+//     left: 50%;
+//     outline: none;
+//     position: absolute;
+//     top: 50%;
+//     transform: translate(-50%, -50%);
+//     width: $HANDLE_GRIP_SIZE;
+//   }
+
+//   &:hover {
+//     background: none;
+//     outline: none;
+
+//     div {
+//       background-color: $BG_CLR_BLUE;
+//       outline: $OUTLINE_WIDTH_SELECTED solid $FG_CLR_BLUE;
+//     }
+//   }
+// }
+
 body {
   margin: 0;
 }
@@ -60,15 +95,8 @@ body {
   }
 
   .node-toolbar {
-    opacity: 0.6;
-    transition: opacity 0.15s ease-in;
-
-    &:hover {
-      opacity: 1;
-    }
-
     .MuiStack-root {
-      background-color: rgb(255, 255, 255, 0.85);
+      background-color: #ffffff;
       border-radius: 4px;
       box-shadow: 0 0 5px #c0c0c0;
       padding: 10px;
@@ -129,7 +157,6 @@ body {
       height: $HANDLE_GRIP_SIZE;
       min-height: 0;
       min-width: 0;
-      // outline: none;
       outline-offset: -$OUTLINE_WIDTH_SELECTED;
       width: $HANDLE_GRIP_SIZE;
 
@@ -153,6 +180,7 @@ body {
         &.top.index_#{$i} {
           transform: translate(calc(-50% + ($i * $HANDLE_SPACING_X)), 3px - calc(($HANDLE_GRIP_SIZE - 1px) / 2));
         }
+
         &.bottom.index_#{$i} {
           transform: translate(calc(-50% + ($i * $HANDLE_SPACING_X)), -3px + calc(($HANDLE_GRIP_SIZE - 1px) / 2));
         }
@@ -297,12 +325,6 @@ body {
     padding: 5px;
     background-color: #ffffff;
     box-shadow: 0 0 10px #808080;
-    opacity: 0.6;
-    transition: opacity 0.15s ease-in;
-
-    &:hover {
-      opacity: 1;
-    }
 
     table {
       border-spacing: 0;
@@ -473,6 +495,39 @@ body {
     outline-color: #00000040;
     background-color: #00000010;
     pointer-events: none;
+  }
+
+  @keyframes edge-animation  {
+    from {
+      stroke-dashoffset: 100%;
+    }
+    to {
+      stroke-dashoffset: 0%; 
+    }
+  }
+
+  .tour-panel {
+    width: 1000px;
+  }
+
+  .control-panel {
+    left: 40px;
+    .MuiButton-outlined {
+      background-color: #ffffff;
+    }
+  }
+
+  .custom-edge-label {
+    &.selected {
+      text-shadow: 0 0 5px #ffffff, 0 0 5px #ffffff, 0 0 5px #ffffff, 0 0 5px #ffffff, 0 0 5px #ffffff, 0 0 5px #ffffff;
+      color: #000000;
+      font-weight: bold;
+    }
+    &.is-editing {}
+    &.should-enhance {}
+    &.should-make-transparent {
+      opacity: 0.25;
+    }
   }
 }
 

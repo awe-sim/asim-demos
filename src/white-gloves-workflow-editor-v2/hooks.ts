@@ -1,9 +1,7 @@
-import { Draft, produce } from 'immer';
+import { produce } from 'immer';
 import { useCallback } from 'react';
 import { Edge, Node, useReactFlow } from 'reactflow';
-import { Action, Stage } from './types';
-
-type FnRecipe<T> = (draft: Draft<T>) => Draft<T> | void | undefined;
+import { Action, FnRecipe, Stage } from './types';
 
 export function useReactFlowHooks() {
   //

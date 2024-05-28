@@ -4,135 +4,24 @@ import classNames from 'classnames';
 import { SyntheticEvent, useCallback, useEffect, useMemo, useRef } from 'react';
 import { Handle, NodeProps, NodeToolbar, Position, useEdges } from 'reactflow';
 import { useRecoilState, useRecoilValue } from 'recoil';
-import { prevent } from '../common/helpers';
 import { showToast2 } from '../common/MySnackbar';
+import { STAGE_AUTOCOMPLETE_OPTIONS, STAGE_TYPES_LOOKUP } from './constants';
 import { useReactFlowHooks } from './hooks';
-import { deadEndNodeIdsState, selectedProcessConnectionState, visitedIdsState } from './states';
-import { Action, Stage, Type } from './types';
-import { editingNodeIdState } from './states-v2';
-
-enum AutoCompleteOptions {
-  START = 'Start',
-  MIGRATION_LETTER_SENT = 'Migration letter sent',
-  CONNECTION_INFO_RECEIVED = 'Connection info received',
-  CONNECTION_OK = 'Connection OK',
-  CONNECTION_FAILED = 'Connection failed',
-  CONNECTION_TEST_DATE_PROPOSED = 'Connection test date proposed',
-  CONNECTION_TEST_DATE_CONFIRMED = 'Connection test date confirmed',
-  GOLIVE_T_14_LETTER_SENT = 'GoLive T-14 letter sent',
-  GOLIVE_T_14_LETTER_ACKNOWLEDGED = 'GoLive T-14 letter acknowledged',
-  GOLIVE_T_5_LETTER_SENT = 'GoLive T-5 letter sent',
-  GOLIVE_T_5_LETTER_ACKNOWLEDGED = 'GoLive T-5 letter acknowledged',
-  GOLIVE_T_1_LETTER_SENT = 'GoLive T-1 letter sent',
-  GOLIVE_T_1_LETTER_ACKNOWLEDGED = 'GoLive T-1 letter acknowledged',
-  GOLIVE = 'GoLive',
-  LIVE_LOAD_REQUESTED = 'Live load requested',
-  MIGRATION_COMPLETE = 'Migration complete',
-}
-
-const AUTOCOMPLETE_OPTIONS = [
-  //
-  AutoCompleteOptions.START,
-  AutoCompleteOptions.MIGRATION_LETTER_SENT,
-  AutoCompleteOptions.CONNECTION_INFO_RECEIVED,
-  AutoCompleteOptions.CONNECTION_OK,
-  AutoCompleteOptions.CONNECTION_FAILED,
-  AutoCompleteOptions.CONNECTION_TEST_DATE_PROPOSED,
-  AutoCompleteOptions.CONNECTION_TEST_DATE_CONFIRMED,
-  AutoCompleteOptions.GOLIVE_T_14_LETTER_SENT,
-  AutoCompleteOptions.GOLIVE_T_14_LETTER_ACKNOWLEDGED,
-  AutoCompleteOptions.GOLIVE_T_5_LETTER_SENT,
-  AutoCompleteOptions.GOLIVE_T_5_LETTER_ACKNOWLEDGED,
-  AutoCompleteOptions.GOLIVE_T_1_LETTER_SENT,
-  AutoCompleteOptions.GOLIVE_T_1_LETTER_ACKNOWLEDGED,
-  AutoCompleteOptions.GOLIVE,
-  AutoCompleteOptions.LIVE_LOAD_REQUESTED,
-  AutoCompleteOptions.MIGRATION_COMPLETE,
-];
-
-const TYPE_MAP: Record<AutoCompleteOptions, Type> = {
-  [AutoCompleteOptions.START]: Type.START,
-  [AutoCompleteOptions.MIGRATION_LETTER_SENT]: Type.AWAITING_REPLY,
-  [AutoCompleteOptions.CONNECTION_INFO_RECEIVED]: Type.NORMAL,
-  [AutoCompleteOptions.CONNECTION_OK]: Type.NORMAL,
-  [AutoCompleteOptions.CONNECTION_FAILED]: Type.ERROR,
-  [AutoCompleteOptions.CONNECTION_TEST_DATE_PROPOSED]: Type.AWAITING_REPLY,
-  [AutoCompleteOptions.CONNECTION_TEST_DATE_CONFIRMED]: Type.NORMAL,
-  [AutoCompleteOptions.GOLIVE_T_14_LETTER_SENT]: Type.AWAITING_REPLY,
-  [AutoCompleteOptions.GOLIVE_T_14_LETTER_ACKNOWLEDGED]: Type.NORMAL,
-  [AutoCompleteOptions.GOLIVE_T_5_LETTER_SENT]: Type.AWAITING_REPLY,
-  [AutoCompleteOptions.GOLIVE_T_5_LETTER_ACKNOWLEDGED]: Type.NORMAL,
-  [AutoCompleteOptions.GOLIVE_T_1_LETTER_SENT]: Type.AWAITING_REPLY,
-  [AutoCompleteOptions.GOLIVE_T_1_LETTER_ACKNOWLEDGED]: Type.NORMAL,
-  [AutoCompleteOptions.GOLIVE]: Type.NORMAL,
-  [AutoCompleteOptions.LIVE_LOAD_REQUESTED]: Type.AWAITING_REPLY,
-  [AutoCompleteOptions.MIGRATION_COMPLETE]: Type.DONE,
-};
+import { activeConstraintState, deadEndNodeIdsState, editingIdState, visitedIdsState } from './states';
+import { Action, Stage, StageAutoCompleteOptions, StageType } from './types';
 
 export const CustomNode: React.FC<NodeProps<Stage>> = ({ id, selected, dragging, data: { label, type } }) => {
   //
+  // Ref for the input element
   const ref = useRef<HTMLInputElement>(null);
 
-  const { updateNode } = useReactFlowHooks();
-  const edges = useEdges<Action>();
+  // Editing ID
+  const [editingId, setEditingId] = useRecoilState(editingIdState);
 
-  const [editingNodeId, setEditingNodeId] = useRecoilState(editingNodeIdState);
-  const isEditing = editingNodeId === id;
+  // Check if this node is being edited
+  const isEditing = editingId?.id === id;
 
-  const visitedIds = useRecoilValue(visitedIdsState);
-  const deadEndNodeIds = useRecoilValue(deadEndNodeIdsState);
-  const selectedConnection = useRecoilValue(selectedProcessConnectionState);
-  const shouldMakeTransparent = !!selectedConnection && !visitedIds.has(id);
-
-  const hasReminders = edges.some(e => e.target === id && e.data?.isEmailAction && e.data.variants.some(v => v.hasReminder));
-  const reminderColor = useMemo(() => {
-    switch (type) {
-      case Type.START:
-        return 'default';
-      case Type.NORMAL:
-        return 'primary';
-      case Type.AWAITING_REPLY:
-        return 'warning';
-      case Type.ERROR:
-        return 'error';
-      case Type.DONE:
-        return 'success';
-    }
-  }, [type]);
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const onAutoCompleteChange = useCallback(
-    (_ev: SyntheticEvent, value: AutocompleteValue<string, false, true, true>) => {
-      updateNode(id, draft => {
-        draft.data.label = value;
-        draft.data.type = TYPE_MAP[value as AutoCompleteOptions] ?? draft.data.type;
-      });
-      setEditingNodeId(undefined);
-    },
-    [id, setEditingNodeId, updateNode],
-  );
-
-  const onInputBlur = useCallback<React.FocusEventHandler>(() => {
-    setEditingNodeId(undefined);
-  }, [setEditingNodeId]);
-
-  const setType = useCallback(
-    (type: Type) => {
-      if (type === Type.START && edges.some(e => e.target === id)) {
-        showToast2('Cannot change type to Start if there are incoming connections!');
-        return;
-      }
-      if (type === Type.DONE && edges.some(e => e.source === id)) {
-        showToast2('Cannot change type to Done if there are outgoing connections!');
-        return;
-      }
-      updateNode(id, draft => {
-        draft.data.type = type;
-      });
-    },
-    [edges, id, updateNode],
-  );
-
+  // Focus the input element when editing
   useEffect(() => {
     if (isEditing) {
       setTimeout(() => {
@@ -142,10 +31,75 @@ export const CustomNode: React.FC<NodeProps<Stage>> = ({ id, selected, dragging,
     }
   }, [isEditing]);
 
+  // Hook to update the node
+  const { updateNode } = useReactFlowHooks();
+
+  // Get all edges
+  const edges = useEdges<Action>();
+
+  // Get IDs to check if this visited or a dead end
+  const visitedIds = useRecoilValue(visitedIdsState);
+  const deadEndNodeIds = useRecoilValue(deadEndNodeIdsState);
+  const activeConstraint = useRecoilValue(activeConstraintState);
+  const shouldMakeTransparent = !!activeConstraint && !visitedIds.has(id);
+
+  // Check if this node has reminders
+  const hasReminders = edges.some(e => e.target === id && e.data?.isEmailAction && e.data.variants.some(v => v.hasReminder));
+  const reminderColor = useMemo(() => {
+    switch (type) {
+      case StageType.START:
+        return 'default';
+      case StageType.NORMAL:
+        return 'primary';
+      case StageType.AWAITING_REPLY:
+        return 'warning';
+      case StageType.ERROR:
+        return 'error';
+      case StageType.DONE:
+        return 'success';
+    }
+  }, [type]);
+
+  // Handle the autocomplete change
+  const onAutoCompleteChange = useCallback(
+    (_ev: SyntheticEvent, value: AutocompleteValue<string, false, true, true>) => {
+      updateNode(id, draft => {
+        draft.data.label = value;
+        draft.data.type = STAGE_TYPES_LOOKUP[value as StageAutoCompleteOptions] ?? draft.data.type;
+      });
+      setEditingId(undefined);
+    },
+    [id, setEditingId, updateNode],
+  );
+
+  // Handle the input blur
+  const onInputBlur = useCallback<React.FocusEventHandler>(() => {
+    setEditingId(undefined);
+  }, [setEditingId]);
+
+  // Set the type of the stage
+  const setType = useCallback(
+    (type: StageType) => {
+      if (type === StageType.START && edges.some(e => e.target === id)) {
+        showToast2('Cannot change type to Start since there are incoming connections!');
+        return;
+      }
+      if (type === StageType.DONE && edges.some(e => e.source === id)) {
+        showToast2('Cannot change type to Done since there are outgoing connections!');
+        return;
+      }
+      updateNode(id, draft => {
+        draft.data.type = type;
+      });
+    },
+    [edges, id, updateNode],
+  );
+
+  // Handles
   const handles = useMemo(() => {
     const handles = [];
     for (let i = -1; i <= 1; ++i) {
-      if (type !== Type.START) {
+      if (type !== StageType.START) {
         handles.push(
           <Handle className={classNames('handle', 'top', `index_${i}`)} key={`up_${i}_target`} id={`up_${i}_target`} type="target" position={Position.Top}>
             <div className="handle-inner"></div>
@@ -157,7 +111,7 @@ export const CustomNode: React.FC<NodeProps<Stage>> = ({ id, selected, dragging,
           </Handle>,
         );
       }
-      if (type !== Type.DONE) {
+      if (type !== StageType.DONE) {
         handles.push(
           <Handle className={classNames('handle', 'top', `index_${i}`)} key={`up_${i}_source`} id={`up_${i}_source`} type="source" position={Position.Top}>
             <div className="handle-inner"></div>
@@ -171,7 +125,7 @@ export const CustomNode: React.FC<NodeProps<Stage>> = ({ id, selected, dragging,
       }
     }
     for (let i = -1; i <= 1; ++i) {
-      if (type !== Type.START) {
+      if (type !== StageType.START) {
         handles.push(
           <Handle className={classNames('handle', 'left', `index_${i}`)} key={`lt_${i}_target`} id={`lt_${i}_target`} type="target" position={Position.Left}>
             <div className="handle-inner"></div>
@@ -183,7 +137,7 @@ export const CustomNode: React.FC<NodeProps<Stage>> = ({ id, selected, dragging,
           </Handle>,
         );
       }
-      if (type !== Type.DONE) {
+      if (type !== StageType.DONE) {
         handles.push(
           <Handle className={classNames('handle', 'left', `index_${i}`)} key={`lt_${i}_source`} id={`lt_${i}_source`} type="source" position={Position.Left}>
             <div className="handle-inner"></div>
@@ -199,6 +153,8 @@ export const CustomNode: React.FC<NodeProps<Stage>> = ({ id, selected, dragging,
     return handles;
   }, [type]);
 
+  console.log('Rendering CustomNode', "label", label, "type", type, "isEditing", isEditing, "selected", selected, "dragging", dragging, "shouldMakeTransparent", shouldMakeTransparent);
+
   return (
     <>
       <Tooltip
@@ -207,27 +163,29 @@ export const CustomNode: React.FC<NodeProps<Stage>> = ({ id, selected, dragging,
         arrow
         disableInteractive
         title={
-          <>
-            Stage: <b>{label}</b>
-            {hasReminders || deadEndNodeIds.has(id) ? (
-              <ul>
-                {hasReminders && <li>Has reminders</li>}
-                {deadEndNodeIds.has(id) && <li>Dead end! Process arriving at this communication stage will not be able to progress any further!</li>}
-              </ul>
-            ) : null}
-          </>
+          isEditing || selected ? null : (
+            <>
+              Stage: <b>{label}</b>
+              {hasReminders || deadEndNodeIds.has(id) ? (
+                <ul>
+                  {hasReminders && <li>Has reminders</li>}
+                  {deadEndNodeIds.has(id) && <li>Dead end! Process arriving at this communication stage will not be able to progress any further!</li>}
+                </ul>
+              ) : null}
+            </>
+          )
         }>
         <div className={classNames('custom-node', selected && 'selected', dragging && 'dragging', type, deadEndNodeIds.has(id) && 'dead-end')} tabIndex={-1} style={{ opacity: !shouldMakeTransparent ? 1 : 0.25 }}>
           <div className="content">
             {isEditing && (
               <Autocomplete //
-              id="tags-standard"
-              freeSolo
-              disableClearable
-              autoFocus
-              autoSelect
-              value={label}
-              options={AUTOCOMPLETE_OPTIONS}
+                id="tags-standard"
+                freeSolo
+                disableClearable
+                autoFocus
+                autoSelect
+                value={label}
+                options={STAGE_AUTOCOMPLETE_OPTIONS}
                 onChange={onAutoCompleteChange}
                 componentsProps={{ popper: { style: { width: 300 } } }}
                 renderOption={(props, option, { selected }) => (
@@ -237,7 +195,7 @@ export const CustomNode: React.FC<NodeProps<Stage>> = ({ id, selected, dragging,
                 )}
                 renderInput={params => (
                   <TextField //
-                  {...params}
+                    {...params}
                     inputRef={ref}
                     autoFocus
                     variant="standard"
@@ -257,30 +215,30 @@ export const CustomNode: React.FC<NodeProps<Stage>> = ({ id, selected, dragging,
           {handles}
         </div>
       </Tooltip>
-      <NodeToolbar onDoubleClick={prevent} position={Position.Top} offset={20} className={classNames('node-toolbar', selected && 'selected', dragging && 'dragging')}>
+      <NodeToolbar position={Position.Top} offset={20} className={classNames('node-toolbar', selected && 'selected', dragging && 'dragging')}>
         <Stack direction="row" spacing={1}>
           <Tooltip PopperProps={{ className: 'workflow' }} placement="top" arrow disableInteractive title="Change this state to START. It is the first state in a workflow and can only have actions leading away from it.">
-            <Button className={classNames(Type.START, type === Type.START && 'selected')} variant="outlined" size="small" onClick={() => setType(Type.START)}>
+            <Button className={classNames(StageType.START, type === StageType.START && 'selected')} variant="outlined" size="small" onClick={() => setType(StageType.START)}>
               Start
             </Button>
           </Tooltip>
           <Tooltip PopperProps={{ className: 'workflow' }} placement="top" arrow disableInteractive title="Change this state to REGULAR. This indicates to WG user that migration is progressing as expected.">
-            <Button className={classNames(Type.NORMAL, type === Type.NORMAL && 'selected')} variant="outlined" size="small" onClick={() => setType(Type.NORMAL)}>
+            <Button className={classNames(StageType.NORMAL, type === StageType.NORMAL && 'selected')} variant="outlined" size="small" onClick={() => setType(StageType.NORMAL)}>
               Normal
             </Button>
           </Tooltip>
           <Tooltip PopperProps={{ className: 'workflow' }} placement="top" arrow disableInteractive title="Change this state to AWAITING REPLY. This indicates to WG user a reply is being awaited from the partner.">
-            <Button className={classNames(Type.AWAITING_REPLY, type === Type.AWAITING_REPLY && 'selected')} variant="outlined" size="small" onClick={() => setType(Type.AWAITING_REPLY)}>
+            <Button className={classNames(StageType.AWAITING_REPLY, type === StageType.AWAITING_REPLY && 'selected')} variant="outlined" size="small" onClick={() => setType(StageType.AWAITING_REPLY)}>
               Awaiting reply
             </Button>
           </Tooltip>
           <Tooltip PopperProps={{ className: 'workflow' }} placement="top" arrow disableInteractive title="Change this state to ERROR. This indicates to WG user that an intervention is required to bring the migration back on track.">
-            <Button className={classNames(Type.ERROR, type === Type.ERROR && 'selected')} variant="outlined" size="small" onClick={() => setType(Type.ERROR)}>
+            <Button className={classNames(StageType.ERROR, type === StageType.ERROR && 'selected')} variant="outlined" size="small" onClick={() => setType(StageType.ERROR)}>
               Error
             </Button>
           </Tooltip>
           <Tooltip PopperProps={{ className: 'workflow' }} placement="top" arrow disableInteractive title="Change this state to DONE. This indicates to WG user that the migration is complete. It is the last state in a workflow and can only have actions leading to it. In order to support a particular connection type, there must be a valid path from START to DONE for that connection type.">
-            <Button className={classNames(Type.DONE, type === Type.DONE && 'selected')} variant="outlined" size="small" onClick={() => setType(Type.DONE)}>
+            <Button className={classNames(StageType.DONE, type === StageType.DONE && 'selected')} variant="outlined" size="small" onClick={() => setType(StageType.DONE)}>
               Done
             </Button>
           </Tooltip>

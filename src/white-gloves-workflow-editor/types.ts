@@ -25,11 +25,18 @@ export enum ProcessDirection {
   OUTBOUND = 'OUTBOUND',
 }
 
-export type State = {
+export type PositionSize = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+export type Stage = {
   label: string;
   type: Type;
-  isEditing: boolean;
-  isToolbarShowing: boolean;
+  // isEditing: boolean;
+  // isToolbarShowing: boolean;
 };
 
 export type Action = {
