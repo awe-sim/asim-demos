@@ -9,7 +9,7 @@ import { CustomNode } from './CustomNode';
 import { findTargetHandle, isHistoryEqual, isMouseEvent, isReactFlowPane, makeNewEdge, makeNewNode } from './helpers';
 import { History } from './history';
 import { activeConstraintState, deadEndNodeIdsState, editingIdState, selectedIdsState, tourStateState, visitedIdsState } from './states';
-import { Action, Constraint, HistoryItem, Stage, StageType, TourAction, TourState } from './types';
+import { Action, Constraint, HistoryItem, Stage, StageType, TourAction } from './types';
 import { CONSTRAINTS, CONSTRAINTS_LOOKUP, TOUR_FSM } from './constants';
 import { Graph } from './graph';
 import { CheckCircle, Warning } from '@mui/icons-material';
