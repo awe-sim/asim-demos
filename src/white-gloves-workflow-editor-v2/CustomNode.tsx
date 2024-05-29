@@ -153,7 +153,7 @@ export const CustomNode: React.FC<NodeProps<Stage>> = ({ id, selected, dragging,
     return handles;
   }, [type]);
 
-  console.log('Rendering CustomNode', "label", label, "type", type, "isEditing", isEditing, "selected", selected, "dragging", dragging, "shouldMakeTransparent", shouldMakeTransparent);
+  // console.log('Rendering CustomNode', "label", label, "type", type, "isEditing", isEditing, "selected", selected, "dragging", dragging, "shouldMakeTransparent", shouldMakeTransparent);
 
   return (
     <>

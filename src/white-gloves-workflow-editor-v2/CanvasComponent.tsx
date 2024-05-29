@@ -1,7 +1,7 @@
 import { Button, Stack, Tooltip } from '@mui/material';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactFlow, { Background, BackgroundVariant, Controls, Edge, EdgeMouseHandler, EdgeTypes, HandleType, MiniMap, Node, NodeMouseHandler, NodeOrigin, NodeTypes, OnConnect, OnConnectEnd, OnConnectStart, OnEdgeUpdateFunc, OnInit, OnSelectionChangeFunc, Panel, ReactFlowInstance, SelectionMode, updateEdge, useEdgesState, useNodesState, useReactFlow } from 'reactflow';
-import { useRecoilState, useSetRecoilState } from 'recoil';
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { v4 } from 'uuid';
 import { CustomEdge } from './CustomEdge';
 import { CustomEdgeToolbarPlaceholderComponent } from './CustomEdgeToolbar';
@@ -17,8 +17,8 @@ import { canExecuteFSM, executeFSM } from './state-machine';
 
 const INITIAL_NODES: Node<Stage>[] = [
   //
-  { id: v4(), data: { label: 'Start', type: StageType.START }, position: { x: 300, y: 300 }, type: 'CustomNode' },
-  { id: v4(), data: { label: 'Migration Complete', type: StageType.DONE }, position: { x: 600, y: 600 }, type: 'CustomNode' },
+  { id: v4(), selected: false, data: { label: 'Start', type: StageType.START }, position: { x: 300, y: 300 }, type: 'CustomNode' },
+  { id: v4(), selected: false, data: { label: 'Migration Complete', type: StageType.DONE }, position: { x: 600, y: 600 }, type: 'CustomNode' },
 ];
 
 const INITIAL_EDGES: Edge<Action>[] = [];
@@ -142,6 +142,13 @@ export const CanvasComponent: React.FC = () => {
 
   // Setter for editing node ID
   const setEditingId = useSetRecoilState(editingIdState);
+  const editingId = useRecoilValue(editingIdState);
+
+  useEffect(() => { 
+    console.log('NODES', nodes.map(it => `${it.data.label}__${it.selected}__${it.id}`));
+    console.log('EDGES', edges.map(it => `${it.label}__${it.selected}__${it.id}`));
+    console.log('EDITING', editingId)
+  }, [edges, editingId, nodes])
 
   // Double-click handler: Creates a new node
   const onDoubleClick = useCallback<React.MouseEventHandler<Element>>(

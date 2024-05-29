@@ -13,7 +13,7 @@ export const CustomEdge: React.FC<EdgeProps<Action>> = ({ id, sourceX, sourceY, 
   const [editingId, setEditingId] = useRecoilState(editingIdState);
 
   // Check if this node is being edited
-  const isEditing = editingId === id;
+  const isEditing = editingId?.id === id && editingId.type === 'edge';
 
   // Set the edge label coordinates
   const setEdgeLabelCoords = useSetRecoilState(edgeLabelCoordsState);
@@ -22,7 +22,8 @@ export const CustomEdge: React.FC<EdgeProps<Action>> = ({ id, sourceX, sourceY, 
 
   // Clear the editing ID if the edge is not selected
   useEffect(() => {
-    setEditingId(value => (!selected && value === id ? undefined : value));
+    // setEditingId(value => (!selected && value === id ? undefined : value));
+    setEditingId(value => (!selected && value?.id === id && value.type === 'edge' ? undefined : value));
   }, [id, selected, setEditingId]);
 
   // Whether the edge is an email action
